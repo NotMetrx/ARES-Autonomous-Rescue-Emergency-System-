@@ -63,6 +63,13 @@ class VisionEvasionPipeline:
         self.default_obstacle_radius = default_obstacle_radius
         self._last_time: Optional[float] = None
 
+        # Pre-warm neural detector and spatial projector to eliminate cold-start cache misses
+        try:
+            _warm = np.zeros((224, 224, 3), dtype=np.uint8)
+            self.detector.detect(_warm)
+        except Exception:
+            pass
+
     def process_frame(
         self,
         frame: np.ndarray,
