@@ -34,7 +34,22 @@ ares/
 
 ## Requisitos de Ejecución
 * Python 3.10+
-* SQLite 3 con soporte WAL
+* SQLite 3 con soporte WAL (`libsqlite3-dev` en Linux)
+
+### Instalación en Linux (Ubuntu / Debian / Raspberry Pi / Jetson)
+```bash
+# 1. Dependencias del sistema (apt)
+sudo apt update && sudo apt install -y python3-dev build-essential sqlite3 libsqlite3-dev
+
+# 2. Entorno virtual e instalación de dependencias
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements-linux.txt
+
+# Para instalación ligera de PyTorch solo CPU en Linux:
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
 
 ## Ejecución del Servidor Táctico
 ```bash
@@ -43,7 +58,12 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 * **Dashboard Táctico:** `http://localhost:8000/`
 * **Swagger UI / Documentación:** `http://localhost:8000/docs`
 
-## Ejecución de la Suite de Pruebas
+## Demostración en Vivo del Pipeline D-FINE & Evasión 3D
 ```bash
-pytest
+python demo_test.py
+```
+
+## Ejecución de la Suite de Pruebas (85 Tests)
+```bash
+pytest -v
 ```
