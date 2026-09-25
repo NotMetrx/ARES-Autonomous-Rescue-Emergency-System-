@@ -13,7 +13,8 @@ import {
   Grid2X2,
   Wind,
   ShieldCheck,
-  Cpu
+  Cpu,
+  Radio
 } from 'lucide-react';
 import { tacticalVoice } from '../services/tacticalVoice';
 
@@ -137,6 +138,17 @@ export const Header: React.FC = () => {
       <div className="flex items-center space-x-2">
         {/* Airspace View Mode Switcher */}
         <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/70">
+          <button
+            onClick={() => setViewMode('2d')}
+            className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-black rounded-lg transition ${
+              viewMode === '2d' 
+                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-md shadow-cyan-500/25 ring-1 ring-cyan-400' 
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5 text-cyan-300" />
+            <span>2D Radar</span>
+          </button>
           <button
             onClick={() => setViewMode('3d')}
             className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg transition ${

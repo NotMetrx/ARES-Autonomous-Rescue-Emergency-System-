@@ -76,3 +76,42 @@ async def manual_fsm_transition(drone_id: str, new_state: DroneFSMState):
     
     swarm_simulator.set_drone_command(drone_id, new_state)
     return {"status": "SUCCESS", "drone_id": drone_id, "new_state": new_state.value}
+
+from pydantic import BaseModel
+from typing import Optional
+
+class DroneGotoRequest(BaseModel):
+    lat: float
+    lon: float
+    alt: Optional[float] = None
+    speed_ms: Optional[float] = None
+
+@router.post("/{drone_id}/goto")
+async def drone_goto_target(drone_id: str, goto_req: DroneGotoRequest):
+    """
+    Tactical GOTO Endpoint:
+    Dispatches a drone directly to designated geospatial coordinates (lat, lon, alt).
+    Updates physical trajectory in the simulator.
+    """
+    success = swarm_simulator.set_drone_target(
+        drone_id=drone_id,
+        lat=goto_req.lat,
+        lon=goto_req.lon,
+        alt=goto_req.alt,
+        speed=goto_req.speed_ms
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Drone {drone_id} no encontrado en la flota activa")
+    
+    return {
+        "status": "DISPATCHED",
+        "drone_id": drone_id,
+        "target": {
+            "lat": goto_req.lat,
+            "lon": goto_req.lon,
+            "alt": goto_req.alt,
+            "speed_ms": goto_req.speed_ms
+        },
+        "message": f"{drone_id} navegando hacia Lat: {goto_req.lat:.6f}, Lon: {goto_req.lon:.6f}"
+    }
+

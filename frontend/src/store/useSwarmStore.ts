@@ -19,7 +19,7 @@ interface SwarmStoreState {
   wsConnected: boolean;
   wsHz: number;
   frameSeq: number;
-  viewMode: '3d' | 'map' | 'camera' | 'split';
+  viewMode: '2d' | '3d' | 'map' | 'camera' | 'split';
   activeTab: 'fleet' | 'missions' | 'detections' | 'defense' | 'blackbox';
   theme: 'dark' | 'light';
   voiceEnabled: boolean;
@@ -41,7 +41,7 @@ interface SwarmStoreState {
   handleTelemetryFrame: (frame: TelemetryFrame) => void;
   setWsConnected: (connected: boolean) => void;
   setSelectedDroneId: (droneId: string) => void;
-  setViewMode: (mode: '3d' | 'map' | 'camera' | 'split') => void;
+  setViewMode: (mode: '2d' | '3d' | 'map' | 'camera' | 'split') => void;
   setActiveTab: (tab: 'fleet' | 'missions' | 'detections' | 'defense' | 'blackbox') => void;
   toggleTheme: () => void;
   toggleVoice: () => void;
@@ -68,7 +68,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
   wsConnected: false,
   wsHz: 20,
   frameSeq: 0,
-  viewMode: '3d',
+  viewMode: '2d',
   activeTab: 'fleet',
   theme: 'dark',
   voiceEnabled: true,

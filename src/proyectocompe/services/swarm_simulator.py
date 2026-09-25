@@ -136,6 +136,23 @@ class SwarmSimulator:
     def set_drone_command(self, drone_id: str, fsm_state: DroneFSMState):
         if drone_id in self.agents:
             self.agents[drone_id]["fsm"] = fsm_state
+            if fsm_state == DroneFSMState.RTH:
+                self.agents[drone_id]["target_lat"] = self.base_lat
+                self.agents[drone_id]["target_lon"] = self.base_lon
+
+    def set_drone_target(self, drone_id: str, lat: float, lon: float, alt: float = None, speed: float = None) -> bool:
+        if drone_id in self.agents:
+            agent = self.agents[drone_id]
+            agent["target_lat"] = lat
+            agent["target_lon"] = lon
+            if alt is not None:
+                agent["alt"] = alt
+            if speed is not None:
+                agent["speed"] = speed
+            agent["fsm"] = DroneFSMState.ROUTING
+            fsm_service.transition_state(drone_id, DroneFSMState.ROUTING)
+            return True
+        return False
 
     def update_physics(self):
         """Updates kinematics, checks 15m safety bubble, checks geofences, and logs flight data."""
@@ -151,6 +168,35 @@ class SwarmSimulator:
                         agent["fsm"] = DroneFSMState.EMERGENCY
                         fsm_service.transition_state(drone_id, DroneFSMState.EMERGENCY)
                 continue
+
+            # Check if drone is actively navigating to a designated target (GOTO or RTH)
+            if "target_lat" in agent and "target_lon" in agent and agent["fsm"] in (DroneFSMState.ROUTING, DroneFSMState.RTH):
+                dx_m = (agent["target_lon"] - agent["lon"]) * METERS_PER_LAT_DEG * math.cos(math.radians(self.base_lat))
+                dy_m = (agent["target_lat"] - agent["lat"]) * METERS_PER_LAT_DEG
+                dist_m = math.sqrt(dx_m**2 + dy_m**2)
+
+                if dist_m > 2.5:
+                    heading_rad = math.atan2(dy_m, dx_m)
+                    step_m = min(dist_m, agent["speed"] * self.dt)
+                    move_x = step_m * math.cos(heading_rad)
+                    move_y = step_m * math.sin(heading_rad)
+                    agent["lat"] += move_y / METERS_PER_LAT_DEG
+                    agent["lon"] += move_x / (METERS_PER_LAT_DEG * math.cos(math.radians(self.base_lat)))
+                    agent["heading"] = (90.0 - math.degrees(heading_rad)) % 360.0
+                    agent["battery"] = max(0.0, agent["battery"] - (0.012 * self.dt))
+                    coverage_service.update_drone_coverage(agent["lat"], agent["lon"], agent["alt"])
+                    continue
+                else:
+                    # Reached designated waypoint
+                    if agent["fsm"] == DroneFSMState.RTH:
+                        agent["fsm"] = DroneFSMState.LANDED
+                        fsm_service.transition_state(drone_id, DroneFSMState.LANDED)
+                    else:
+                        agent["fsm"] = DroneFSMState.IN_FLIGHT
+                        fsm_service.transition_state(drone_id, DroneFSMState.IN_FLIGHT)
+                    agent.pop("target_lat", None)
+                    agent.pop("target_lon", None)
+                    continue
 
             if agent["fsm"] in (DroneFSMState.IN_FLIGHT, DroneFSMState.ROUTING, DroneFSMState.AVOIDING):
                 agent["orbit_phase"] += agent["orbit_speed"] * self.dt
