@@ -127,7 +127,11 @@ export const App: React.FC = () => {
 
           {viewMode === '3d' && (
             <div className="h-[540px]">
-              <Viewport3D />
+              <Viewport3D 
+                gotoMode={gotoMode} 
+                onTargetDesignated={handleTargetDesignated} 
+                onToggleGotoMode={() => setGotoMode(prev => !prev)}
+              />
             </div>
           )}
 
@@ -155,7 +159,11 @@ export const App: React.FC = () => {
                   <CameraView />
                 </div>
                 <div className="flex-1 min-h-0">
-                  <Viewport3D />
+                  <Viewport3D 
+                    gotoMode={gotoMode} 
+                    onTargetDesignated={handleTargetDesignated} 
+                    onToggleGotoMode={() => setGotoMode(prev => !prev)}
+                  />
                 </div>
               </div>
             </div>

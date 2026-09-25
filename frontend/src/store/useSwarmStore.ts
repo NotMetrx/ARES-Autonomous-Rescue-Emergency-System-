@@ -68,7 +68,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
   wsConnected: false,
   wsHz: 20,
   frameSeq: 0,
-  viewMode: '2d',
+  viewMode: '3d',
   activeTab: 'fleet',
   theme: 'dark',
   voiceEnabled: true,

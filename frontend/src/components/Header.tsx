@@ -151,11 +151,13 @@ export const Header: React.FC = () => {
           </button>
           <button
             onClick={() => setViewMode('3d')}
-            className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg transition ${
-              viewMode === '3d' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-black rounded-lg transition ${
+              viewMode === '3d' 
+                ? 'bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 text-white shadow-md shadow-cyan-500/30 ring-1 ring-cyan-400' 
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-3.5 h-3.5 text-cyan-300" />
             <span>3D Real</span>
           </button>
           <button

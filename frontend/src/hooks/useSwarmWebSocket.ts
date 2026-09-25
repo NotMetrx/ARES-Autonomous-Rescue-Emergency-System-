@@ -29,7 +29,7 @@ export function useSwarmWebSocket() {
           fetch('/api/v1/defense/aerodynamics/pnr-status').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/defense/anti-jamming/status').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/missions/coverage').then(r => r.ok ? r.json() : null),
-          fetch('/api/v1/detections/').then(r => r.ok ? r.json() : null),
+          fetch('/api/v1/detections').then(r => r.ok ? r.json() : null),
         ]);
 
         if (aiRes.status === 'fulfilled' && aiRes.value) setAIStatus(aiRes.value);
