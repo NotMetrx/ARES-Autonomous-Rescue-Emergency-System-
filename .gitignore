@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+wheels/
+*.egg-info
+.pytest_cache/
+
+# Virtual environments
+.venv/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+.npm/
+
+# Data generated during runs (preserve directories)
+data/snapshots/*.jpg
+data/flight_records/*.jsonl
+
+# OS files
+.DS_Store
+Thumbs.db

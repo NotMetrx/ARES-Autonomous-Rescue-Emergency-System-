@@ -1,0 +1,17 @@
+services:
+  ares-c2-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ares_tactical_c2
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persistent local storage for offline missions, snapshots, flight logs, and mbtiles
+      - ./data:/app/data
+    environment:
+      - PROJECT_NAME=ARES Tactical C2 Backend
+      - TELEMETRY_HZ=20
+      - SAFETY_BUBBLE_METERS=15.0
+    network_mode: "host" # High-frequency UDP/WebSocket performance for field laptops & SITL

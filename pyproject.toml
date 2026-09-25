@@ -1,0 +1,26 @@
+[project]
+name = "proyectocompe"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "jhoaodidier", email = "neymardidierlopezgonzales@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.141.1",
+    "numpy>=2.5.3",
+    "pillow>=12.3.0",
+    "pydantic>=2.13.5",
+    "pymavlink>=2.4.49",
+    "uvicorn[standard]>=0.53.0",
+    "websockets>=17.1",
+]
+
+[project.scripts]
+proyectocompe = "proyectocompe:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"

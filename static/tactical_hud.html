@@ -1,0 +1,2699 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARES C2 | Centro de Mando Táctico de Enjambre</title>
+  
+  <!-- Tipografía Moderna Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet Maps Offline Library -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #060911;
+      --bg-surface: #0b1220;
+      --bg-surface-elevated: #111c30;
+      --border-subtle: rgba(56, 189, 248, 0.18);
+      --border-accent: rgba(6, 182, 212, 0.45);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --radar-bg: #050810;
+      --radar-grid: rgba(56, 189, 248, 0.08);
+      --radar-ring: rgba(6, 182, 212, 0.16);
+      --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.25);
+      --glow-emerald: 0 0 20px rgba(16, 185, 129, 0.25);
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html.light {
+      --bg-base: #f0f4f9;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f8fafc;
+      --border-subtle: rgba(148, 163, 184, 0.4);
+      --border-accent: #0284c7;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --radar-bg: #f8fafc;
+      --radar-grid: rgba(2, 132, 199, 0.07);
+      --radar-ring: rgba(2, 132, 199, 0.18);
+      --glow-cyan: 0 2px 12px rgba(2, 132, 199, 0.15);
+      --glow-emerald: 0 2px 12px rgba(5, 150, 105, 0.15);
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      transition: background-color 0.25s ease, color 0.25s ease;
+      letter-spacing: -0.015em;
+    }
+
+    .font-mono-val {
+      font-family: var(--font-mono);
+    }
+
+    .c2-panel {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
+    .radar-canvas-container {
+      background-color: var(--radar-bg);
+      background-image: 
+        radial-gradient(circle, var(--radar-grid) 1px, transparent 1px),
+        linear-gradient(to right, var(--radar-grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--radar-grid) 1px, transparent 1px);
+      background-size: 36px 36px, 18px 18px, 18px 18px;
+    }
+
+    .tab-pill {
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-radius: 10px;
+      transition: all 0.18s ease;
+    }
+    .tab-pill:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-pill.active {
+      color: #38bdf8;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(14, 165, 233, 0.08));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: var(--glow-cyan);
+    }
+
+    /* Radial Progress Gauges */
+    .gauge-circle-bg {
+      fill: none;
+      stroke: rgba(148, 163, 184, 0.15);
+      stroke-width: 4;
+    }
+    .gauge-circle-val {
+      fill: none;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.28);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.5);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-3 lg:p-4 flex flex-col justify-between select-none">
+
+  <!-- ==================== TOP NAVIGATION & COMMAND BAR ==================== -->
+  <header class="c2-panel px-4 py-2.5 mb-3 flex flex-wrap justify-between items-center gap-3">
+    <!-- Brand & Status -->
+    <div class="flex items-center space-x-3">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 text-white font-black text-xl">
+        ⚡
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base font-black tracking-tight bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">
+            ARES TACTICAL C2
+          </h1>
+          <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-700/60 shadow-sm">
+            SWARM v3.0
+          </span>
+          <span id="modeBadge" class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600 shadow-sm">
+            EN VUELO
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">Enjambre Autónomo • Evasión Sub-Milisegundo • Voz Táctica & MAVLink</p>
+      </div>
+    </div>
+
+    <!-- Telemetry Status Chips & Controls -->
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      
+      <!-- Telemetry Status -->
+      <div class="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400"></span>
+        <span class="text-slate-400 font-semibold">ENLACE:</span>
+        <span id="wsStatus" class="font-bold text-emerald-400">CONECTADO</span>
+        <span class="text-slate-600">|</span>
+        <span id="wsFreq" class="font-mono-val font-bold text-cyan-300">20 Hz</span>
+      </div>
+
+      <!-- Edge AI Watchdog Chip -->
+      <div id="aiHeaderChip" class="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
+        <span id="aiPulse" class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+        <span class="text-slate-400 font-semibold">IA:</span>
+        <span id="aiModelStatus" class="font-bold text-cyan-300">D-FINE ONLINE</span>
+        <span class="text-slate-600">|</span>
+        <span id="aiFpsChip" class="font-mono-val font-bold text-amber-300">32.4 FPS</span>
+      </div>
+
+      <!-- MAVLink UDP Gateway Chip -->
+      <div class="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+        <span class="text-slate-400 font-semibold">MAVLINK:</span>
+        <span class="font-bold text-blue-300">UDP :14550</span>
+      </div>
+
+      <!-- Wind & Aerodynamics Chip -->
+      <div class="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
+        <span>💨</span>
+        <span class="text-slate-400 font-semibold">VIENTO:</span>
+        <span id="windHeaderChip" class="font-bold text-sky-300 font-mono-val">3.8 m/s @ 135°</span>
+      </div>
+
+      <!-- Electronic Warfare / GPS Health Chip -->
+      <div class="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
+        <span>🛰️</span>
+        <span class="text-slate-400 font-semibold">EW/GPS:</span>
+        <span id="ewHeaderChip" class="font-bold text-emerald-400">NOMINAL</span>
+      </div>
+
+      <!-- ATAK CoT Gateway Chip -->
+      <div class="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
+        <span>📡</span>
+        <span class="text-slate-400 font-semibold">ATAK:</span>
+        <span class="font-bold text-cyan-300">CoT :4242</span>
+      </div>
+
+      <!-- Tactical Voice Synthesizer Toggle -->
+      <button onclick="toggleVoice()" id="voiceToggleBtn" class="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold rounded-xl transition shadow-sm">
+        <span id="voiceIcon">🔊</span>
+        <span id="voiceText">VOZ ON</span>
+      </button>
+
+      <!-- Black Box Recording Button -->
+      <button id="btnRecord" onclick="toggleBlackBoxRecord()" class="flex items-center space-x-2 px-3 py-1.5 bg-rose-950/70 hover:bg-rose-900 border border-rose-600 text-rose-200 font-bold rounded-xl transition shadow-sm">
+        <span id="recDot" class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+        <span id="recText">REC CAJA NEGRA</span>
+        <span id="recTimer" class="hidden text-rose-200 font-mono-val font-bold">00:00</span>
+      </button>
+
+      <!-- Download Dossier ZIP for Judges -->
+      <a href="/api/v1/missions/ARES-MISSION-01/export/dossier" target="_blank" class="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl transition shadow-md shadow-emerald-500/20">
+        <span>📦</span>
+        <span>DOSSIER ZIP</span>
+      </a>
+
+      <!-- AAR Official Report Button -->
+      <button onclick="openAARModal()" class="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white font-bold rounded-xl transition shadow-md shadow-sky-500/20">
+        <span>📋</span>
+        <span>REPORTE AAR</span>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button onclick="toggleTheme()" id="themeToggleBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 hover:text-white transition">
+        <span id="themeIcon">☀️</span>
+        <span id="themeText" class="font-bold">MODO LUZ</span>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- ==================== BANNER DE REPLAY (CAJA NEGRA) ==================== -->
+  <div id="replayBanner" class="hidden c2-panel p-2.5 rounded-xl mb-3 bg-amber-950/80 border-amber-500 text-amber-100 flex justify-between items-center text-xs">
+    <div class="flex items-center space-x-3">
+      <span class="animate-pulse text-amber-400 font-bold text-sm">⏮️ REPRODUCCIÓN EN CURSO</span>
+      <span id="replaySessionName" class="font-mono-val text-slate-300">...</span>
+      <span>Velocidad: <strong id="replaySpeedBadge" class="text-amber-300 font-bold">1.0x</strong></span>
+    </div>
+    <div class="flex items-center space-x-3">
+      <div class="w-48 bg-black/60 rounded-full h-2.5 overflow-hidden border border-amber-800">
+        <div id="replayProgressBar" class="bg-gradient-to-r from-amber-500 to-yellow-300 h-full w-0 transition-all duration-200"></div>
+      </div>
+      <button onclick="stopReplay()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-lg">
+        DETENER
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== TOP VISUAL KPI METRICS CARDS WITH RADIAL GAUGES ==================== -->
+  <section class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+    
+    <!-- KPI 1: Flota Activa con Mini SVG Donut -->
+    <div class="c2-panel p-3 flex items-center justify-between">
+      <div>
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Flota Activa</div>
+        <div class="flex items-baseline space-x-1.5 mt-0.5">
+          <span id="kpiDronesCount" class="text-2xl font-black text-white">3</span>
+          <span class="text-xs text-slate-400">/ 3 UAVs</span>
+        </div>
+        <span class="text-[10px] text-emerald-400 font-semibold flex items-center mt-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span> 0 Emergencias
+        </span>
+      </div>
+      <div class="relative w-12 h-12">
+        <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+          <circle class="gauge-circle-bg" cx="18" cy="18" r="14" />
+          <circle id="gaugeFleet" class="gauge-circle-val stroke-cyan-400" cx="18" cy="18" r="14" stroke-dasharray="88" stroke-dashoffset="0" stroke-width="4" />
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-cyan-300">100%</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: Cobertura SAR con Radial Progress Gauge -->
+    <div class="c2-panel p-3 flex items-center justify-between">
+      <div>
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cobertura SAR</div>
+        <div class="flex items-baseline space-x-1.5 mt-0.5">
+          <span id="kpiCoveragePct" class="text-2xl font-black text-emerald-400 font-mono-val">0.0%</span>
+        </div>
+        <span id="kpiCoveredAreaM2" class="text-[10px] text-slate-400 font-semibold">0 m² explorados</span>
+      </div>
+      <div class="relative w-12 h-12">
+        <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+          <circle class="gauge-circle-bg" cx="18" cy="18" r="14" />
+          <circle id="gaugeCoverage" class="gauge-circle-val stroke-emerald-400" cx="18" cy="18" r="14" stroke-dasharray="88" stroke-dashoffset="88" stroke-width="4" />
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-xs">🗺️</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Batería Promedio con Gauge Dinámico -->
+    <div class="c2-panel p-3 flex items-center justify-between">
+      <div>
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Batería Flota</div>
+        <div class="flex items-baseline space-x-1.5 mt-0.5">
+          <span id="kpiAvgBattery" class="text-2xl font-black text-emerald-400 font-mono-val">96%</span>
+        </div>
+        <span id="kpiHandoverBadge" class="text-[10px] text-slate-400 font-semibold">Relevo automático &lt;22%</span>
+      </div>
+      <div class="relative w-12 h-12">
+        <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+          <circle class="gauge-circle-bg" cx="18" cy="18" r="14" />
+          <circle id="gaugeBattery" class="gauge-circle-val stroke-emerald-400" cx="18" cy="18" r="14" stroke-dasharray="88" stroke-dashoffset="3" stroke-width="4" />
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-xs">🔋</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Objetivos Detectados con Contador de Clase -->
+    <div class="c2-panel p-3 flex items-center justify-between">
+      <div>
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Objetivos IA</div>
+        <div class="flex items-baseline space-x-2 mt-0.5">
+          <span id="kpiTargetsCount" class="text-2xl font-black text-rose-400">0</span>
+          <span id="kpiSurvivorsBadge" class="text-[11px] text-emerald-400 font-bold">0 supervivientes</span>
+        </div>
+        <span id="kpiHazardsBadge" class="text-[10px] text-amber-400 font-semibold">0 peligros NFZ</span>
+      </div>
+      <div class="w-11 h-11 rounded-2xl bg-rose-950/80 border border-rose-600/70 flex items-center justify-center text-rose-300 text-xl font-bold shadow-md shadow-rose-950">
+        🎯
+      </div>
+    </div>
+
+    <!-- KPI 5: Seguridad Evasión & IA FPS -->
+    <div class="c2-panel p-3 flex items-center justify-between">
+      <div>
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Burbuja 15m</div>
+        <div class="flex items-baseline space-x-1.5 mt-0.5">
+          <span id="kpiSafetyStatus" class="text-xl font-black text-emerald-400">SEGURA</span>
+        </div>
+        <span class="text-[10px] text-cyan-300 font-semibold">Evasión &lt;0.1 ms</span>
+      </div>
+      <div class="w-11 h-11 rounded-2xl bg-cyan-950/80 border border-cyan-600/70 flex items-center justify-center text-cyan-300 text-xl font-bold shadow-md shadow-cyan-950">
+        🛡️
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN SECTION: 2 COLUMNS ==================== -->
+  <main class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1">
+    
+    <!-- LEFT COLUMN: Canvas Radar + Live Telemetry Chart (7 Cols) -->
+    <div class="lg:col-span-7 flex flex-col space-y-3">
+      
+      <!-- Radar Canvas Card -->
+      <div class="c2-panel p-3.5 flex-1 flex flex-col relative overflow-hidden">
+        <!-- Canvas Header Controls -->
+        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400"></span>
+            <!-- View Selector -->
+            <div class="flex items-center space-x-1 bg-slate-900/90 p-0.5 rounded-xl border border-slate-700">
+              <button id="btnViewRadar" onclick="setAirspaceView('radar')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white shadow-sm transition">
+                📡 RADAR
+              </button>
+              <button id="btnViewMap" onclick="setAirspaceView('map')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg text-slate-400 hover:text-white transition">
+                🗺️ MAPA TOPO
+              </button>
+              <button id="btnViewCamera" onclick="setAirspaceView('camera')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg text-slate-400 hover:text-white transition">
+                📹 CÁMARA FPV
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center space-x-2 text-xs text-slate-400">
+            <!-- Draw Custom Sweep Polygon Button -->
+            <button id="btnDrawSweep" onclick="toggleDrawingMode()" class="px-2.5 py-1 bg-amber-950/70 hover:bg-amber-900 border border-amber-600/70 text-amber-200 font-bold rounded-lg transition text-[11px] flex items-center space-x-1">
+              <span>✏️</span><span id="btnDrawText">Dibujar Zona Sweep</span>
+            </button>
+            <label class="flex items-center space-x-1 cursor-pointer">
+              <input type="checkbox" id="chkFrustum" checked onchange="toggleFrustum()" class="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-0">
+              <span class="text-[11px] font-semibold">Haz 3D</span>
+            </label>
+            <label class="flex items-center space-x-1 cursor-pointer">
+              <input type="checkbox" id="chkCoverage" checked onchange="toggleCoverageFootprint()" class="rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0">
+              <span class="text-[11px] font-semibold">Huella</span>
+            </label>
+            <span class="text-slate-600">|</span>
+            <span>F: <strong id="frameSeq" class="text-cyan-400 font-mono-val">0</strong></span>
+          </div>
+        </div>
+
+        <!-- Drawing Mode Banner Overlay (appears when drawing is active) -->
+        <div id="drawingModeBanner" class="hidden p-2 rounded-xl bg-amber-950/90 border border-amber-500 text-amber-100 flex justify-between items-center text-xs mb-2 animate-pulse">
+          <div class="flex items-center space-x-2">
+            <span>✏️ <strong>Modo Dibujo Activo:</strong> Haz clic en el radar para marcar los vértices. Vértices marcados: <strong id="drawnVerticesCount" class="text-white text-sm">0</strong></span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button id="btnFinishDrawing" onclick="finishDrawingAndGenerate()" class="hidden px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-lg transition shadow-md">
+              🚀 Generar Barrido del Enjambre
+            </button>
+            <button onclick="toggleDrawingMode()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg">
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Radar View -->
+        <div id="radarContainer" class="relative flex-1 min-h-[420px] rounded-xl border border-slate-700/60 overflow-hidden radar-canvas-container flex items-center justify-center shadow-inner">
+          <canvas id="radarCanvas" width="940" height="520" class="w-full h-full"></canvas>
+          
+          <!-- Dynamic Floating Legend -->
+          <div class="absolute bottom-3 left-3 text-[10px] bg-slate-950/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-700/80 text-slate-300 space-y-1 shadow-xl pointer-events-none">
+            <div class="font-extrabold text-slate-400 mb-1 border-b border-slate-800 pb-0.5">CAPAS TÁCTICAS:</div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span><span>Dron UAV (Heading & Alt)</span></div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 rounded-full border border-cyan-400 border-dashed"></span><span>Burbuja Seguridad 15m</span></div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-cyan-400/30 border border-cyan-400"></span><span>Haz Trapezoidal Cámara</span></div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>Superviviente Hallado</span></div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-rose-500 rounded-sm"></span><span>Fuego / Peligro Químico</span></div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-red-600/30 border border-red-500"></span><span>NFZ Dinámica de Exclusión</span></div>
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-emerald-500/20 border border-emerald-500/50"></span><span>Área Mapeada (Huella)</span></div>
+          </div>
+        </div>
+
+        <!-- Offline Leaflet Topographic Map View -->
+        <div id="mapContainer" class="relative flex-1 min-h-[420px] rounded-xl border border-slate-700/60 overflow-hidden hidden shadow-inner">
+          <div id="leafletMap" style="width: 100%; height: 420px; background: #060911;"></div>
+        </div>
+
+        <!-- Live FPV Onboard Camera View -->
+        <div id="cameraContainer" class="relative flex-1 min-h-[420px] rounded-xl border border-slate-700/60 overflow-hidden hidden flex flex-col bg-black shadow-inner">
+          <!-- Camera Subheader Toolbar -->
+          <div class="p-2 bg-slate-950/95 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2 text-xs">
+            <!-- Drone Selector -->
+            <div class="flex items-center space-x-1.5">
+              <span class="text-slate-400 font-bold text-[11px]">DRON FPV:</span>
+              <button id="camDroneBtn-ARES-01" onclick="selectFpvDrone('ARES-01')" class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-cyan-600 text-white transition shadow-sm">
+                ARES-01
+              </button>
+              <button id="camDroneBtn-ARES-02" onclick="selectFpvDrone('ARES-02')" class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-slate-800 text-slate-300 hover:text-white transition">
+                ARES-02
+              </button>
+              <button id="camDroneBtn-ARES-03" onclick="selectFpvDrone('ARES-03')" class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-slate-800 text-slate-300 hover:text-white transition">
+                ARES-03
+              </button>
+            </div>
+
+            <!-- Vision Sensor Mode, Snapshot & Forensic Gallery -->
+            <div class="flex items-center space-x-1.5">
+              <button id="btnModeRgb" onclick="setCameraSensorMode('RGB')" class="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-emerald-700 text-white transition shadow-sm">
+                🌈 RGB ÓPTICO
+              </button>
+              <button id="btnModeThermal" onclick="setCameraSensorMode('THERMAL_FLIR')" class="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-slate-800 text-slate-300 hover:text-white transition">
+                🔥 TÉRMICA FLIR
+              </button>
+              <button onclick="captureFpvSnapshot()" class="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm flex items-center space-x-1">
+                <span>📸</span><span>Capturar</span>
+              </button>
+              <button onclick="openForensicModal()" class="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-indigo-500/30 transition shadow-sm flex items-center space-x-1">
+                <span>📁</span><span>Galería</span><span id="snapCountBadge" class="bg-indigo-900 text-indigo-200 px-1.5 py-0.2 rounded-full text-[9px] font-mono">0</span>
+              </button>
+              <button onclick="openAARModal()" class="px-2.5 py-1 rounded-lg font-bold text-[11px] bg-sky-900/60 hover:bg-sky-800 text-sky-300 hover:text-white border border-sky-500/30 transition shadow-sm flex items-center space-x-1">
+                <span>📑</span><span>Informe AAR</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Video Stream Frame -->
+          <div class="relative flex-1 flex items-center justify-center bg-black overflow-hidden min-h-[360px]">
+            <img id="fpvStreamImg" src="/api/v1/camera/ARES-01/stream" alt="ARES Onboard Gimbal FPV Feed" class="w-full h-full object-contain max-h-[440px]" />
+            
+            <!-- Live D-FINE Watermark Badge -->
+            <div class="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-emerald-500/80 text-[10px] font-bold text-emerald-300 flex items-center space-x-1.5 shadow-lg">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>D-FINE (RT-DETR) ACTIVE</span>
+            </div>
+
+            <!-- Resolution & Framerate Badge -->
+            <div class="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 text-[10px] font-mono text-slate-300 shadow-lg">
+              <span>640x360 @ 20 FPS | MJPEG LOW-LATENCY</span>
+            </div>
+          </div>
+
+          <!-- Interactive PTZ Gimbal Console -->
+          <div class="p-2.5 bg-slate-950 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <!-- Source Status & Live Angles -->
+            <div class="flex items-center space-x-2">
+              <span id="camSourceBadge" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-900 text-slate-300 border border-slate-700 flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                <span id="camSourceText">GIMBAL PTZ SIM</span>
+              </span>
+              <span class="text-slate-400 text-[11px] font-mono">
+                PITCH: <strong id="valGimbalPitch" class="text-cyan-400 font-bold">-45°</strong> | 
+                YAW: <strong id="valGimbalYaw" class="text-cyan-400 font-bold">0°</strong> | 
+                ZOOM: <strong id="valGimbalZoom" class="text-cyan-400 font-bold">1.0x</strong>
+              </span>
+            </div>
+
+            <!-- Pitch & Yaw Sliders -->
+            <div class="flex items-center space-x-3 text-[11px]">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 font-bold text-[10px]">PITCH:</span>
+                <input type="range" id="sliderPitch" min="-90" max="15" value="-45" oninput="onGimbalSliderChange()" class="w-20 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 font-bold text-[10px]">YAW:</span>
+                <input type="range" id="sliderYaw" min="-180" max="180" value="0" oninput="onGimbalSliderChange()" class="w-20 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500" />
+              </div>
+            </div>
+
+            <!-- Presets & Zoom Buttons -->
+            <div class="flex items-center space-x-1">
+              <span class="text-slate-500 text-[10px] font-bold mr-1">PRESETS:</span>
+              <button onclick="applyGimbalPreset('nadir')" title="Búsqueda Cenital Vertical (-90°)" class="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-[10px] transition">
+                ⬇️ Nadir 90°
+              </button>
+              <button onclick="applyGimbalPreset('patrol')" title="Exploración Estándar (-45°)" class="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-[10px] transition">
+                📐 Patrulla 45°
+              </button>
+              <button onclick="applyGimbalPreset('horizon')" title="Reconocimiento Frontal (0°)" class="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-[10px] transition">
+                🔭 Horizonte 0°
+              </button>
+              <button onclick="applyGimbalPreset('center')" title="Re-centrar Guiñada y Zoom" class="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-[10px] transition">
+                🎯 Centrar
+              </button>
+              <button id="btnZoomToggle" onclick="toggleGimbalZoom()" title="Alternar Zoom Digital" class="px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold text-[10px] border border-cyan-500/30 transition">
+                🔍 1.0x
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Sparkline Chart Canvas -->
+      <div class="c2-panel p-3">
+        <div class="flex justify-between items-center mb-1.5">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Perfil Cinemático en Vivo (Altitud & Velocidad)</span>
+          </div>
+          <div class="flex items-center space-x-3 text-[11px]">
+            <span class="flex items-center space-x-1"><span class="w-2.5 h-1 bg-cyan-400 rounded"></span><span>ARES-01</span></span>
+            <span class="flex items-center space-x-1"><span class="w-2.5 h-1 bg-amber-400 rounded"></span><span>ARES-02</span></span>
+            <span class="flex items-center space-x-1"><span class="w-2.5 h-1 bg-purple-400 rounded"></span><span>ARES-03</span></span>
+          </div>
+        </div>
+        <div class="h-16 w-full rounded-lg bg-slate-950/70 border border-slate-800 overflow-hidden relative">
+          <canvas id="chartCanvas" width="940" height="70" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- ==================== CHAOS, DEFENSE & RESILIENCE TOOLBAR ==================== -->
+      <div class="c2-panel p-3 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-amber-400 text-sm font-bold">⚡</span>
+            <span class="text-xs font-black text-amber-300 uppercase tracking-wider">Chaos Suite, Defensa EW & Interoperabilidad ATAK</span>
+          </div>
+          <button onclick="restoreSwarmFleet()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-600 text-[11px] font-bold rounded-lg transition">
+            🔄 Restaurar Flota al 100%
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
+          <!-- Button 1: Fallo de Dron -> Self-Healing -->
+          <button onclick="triggerChaosFailure('ARES-02')" class="p-2 bg-rose-950/80 hover:bg-rose-900 border border-rose-600/80 text-rose-100 font-bold rounded-xl transition flex flex-col items-center justify-center text-center shadow-sm">
+            <span class="text-base mb-0.5">💥</span>
+            <span>Fallo ARES-02</span>
+            <span class="text-[9px] text-rose-300 font-normal">Auto-Repartición</span>
+          </button>
+
+          <!-- Button 2: Batería Crítica -> Battery Handover -->
+          <button onclick="triggerChaosBatteryDrain('ARES-01')" class="p-2 bg-amber-950/80 hover:bg-amber-900 border border-amber-600/80 text-amber-100 font-bold rounded-xl transition flex flex-col items-center justify-center text-center shadow-sm">
+            <span class="text-base mb-0.5">🔋</span>
+            <span>Batería 14%</span>
+            <span class="text-[9px] text-amber-300 font-normal">Relevo Guardia</span>
+          </button>
+
+          <!-- Button 3: Inyección Fuego -> Dynamic NFZ -->
+          <button onclick="triggerAiDetection('FIRE_HAZARD')" class="p-2 bg-orange-950/80 hover:bg-orange-900 border border-orange-600/80 text-orange-100 font-bold rounded-xl transition flex flex-col items-center justify-center text-center shadow-sm">
+            <span class="text-base mb-0.5">🔥</span>
+            <span>Incendio</span>
+            <span class="text-[9px] text-orange-300 font-normal">NFZ Dinámica</span>
+          </button>
+
+          <!-- Button 4: Electronic Warfare Jamming -> GPS-Denied -->
+          <button onclick="triggerChaosJamming('ARES-02')" class="p-2 bg-red-950/90 hover:bg-red-900 border border-red-500 text-red-100 font-bold rounded-xl transition flex flex-col items-center justify-center text-center shadow-sm">
+            <span class="text-base mb-0.5">🛰️</span>
+            <span>Jamming EW</span>
+            <span class="text-[9px] text-red-300 font-normal">Modo GPS-Denied</span>
+          </button>
+
+          <!-- Button 5: ATAK CoT Immediate Broadcast -->
+          <button onclick="triggerCotBroadcast()" class="p-2 bg-sky-950/80 hover:bg-sky-900 border border-sky-600/80 text-sky-100 font-bold rounded-xl transition flex flex-col items-center justify-center text-center shadow-sm">
+            <span class="text-base mb-0.5">📡</span>
+            <span>ATAK CoT</span>
+            <span class="text-[9px] text-sky-300 font-normal">Emitir UDP :4242</span>
+          </button>
+
+          <!-- Button 6: Wind Gust Simulation (Test PNR) -->
+          <button onclick="triggerWindChange()" class="p-2 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-600/80 text-indigo-100 font-bold rounded-xl transition flex flex-col items-center justify-center text-center shadow-sm">
+            <span class="text-base mb-0.5">💨</span>
+            <span>Viento 9 m/s</span>
+            <span class="text-[9px] text-indigo-300 font-normal">Test PNR Dinámico</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Control Hub & Tabbed Panels (5 Cols) -->
+    <div class="lg:col-span-5 flex flex-col space-y-3">
+      
+      <!-- Modern Navigation Tab Pills -->
+      <div class="c2-panel p-1.5 flex space-x-1 text-xs">
+        <button onclick="switchTab('fleet')" id="tab-fleet" class="tab-pill active flex-1 py-1.5 px-2 text-center">
+          🚁 Flota
+        </button>
+        <button onclick="switchTab('ai')" id="tab-ai" class="tab-pill flex-1 py-1.5 px-2 text-center relative">
+          🎯 Objetivos <span id="aiCountBadge" class="ml-1 px-1.5 py-0.2 bg-rose-600 text-white rounded-full text-[10px] font-bold">0</span>
+        </button>
+        <button onclick="switchTab('missions')" id="tab-missions" class="tab-pill flex-1 py-1.5 px-2 text-center">
+          🗺️ Misiones
+        </button>
+        <button onclick="switchTab('diagnostics')" id="tab-diagnostics" class="tab-pill flex-1 py-1.5 px-2 text-center">
+          🤖 Edge AI
+        </button>
+        <button onclick="switchTab('blackbox')" id="tab-blackbox" class="tab-pill flex-1 py-1.5 px-2 text-center">
+          📼 AAR
+        </button>
+      </div>
+
+      <!-- ==================== TAB 1: FLOTA DE DRONES ==================== -->
+      <div id="panel-fleet" class="c2-panel p-3.5 flex-1 flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex justify-between items-center mb-2.5">
+            <h3 class="text-xs font-black text-white tracking-wider uppercase flex items-center">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 mr-2"></span>
+              Telemetría de la Flota (FSM & Batería)
+            </h3>
+            <span class="text-xs text-slate-400">Total: <strong id="droneCount" class="text-cyan-300 font-bold">3</strong> activos</span>
+          </div>
+
+          <div id="dronesList" class="space-y-2.5 max-h-[290px] overflow-y-auto pr-1">
+            <!-- Drone Cards rendered here -->
+          </div>
+        </div>
+
+        <!-- Tactical Incident & Mission Log -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <h4 class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Registro de Eventos Tácticos:</h4>
+            <button onclick="clearAlerts()" class="text-[10px] text-slate-400 hover:text-white transition">Limpiar</button>
+          </div>
+          <div id="alertsLog" class="h-28 overflow-y-auto text-xs bg-slate-950/90 p-2.5 rounded-xl border border-slate-800 font-mono-val space-y-1.5 text-slate-300 shadow-inner">
+            <div class="text-emerald-400">[C2 LISTO] Enjambre operacional. Resiliencia, voz táctica y MAVLink activos.</div>
+          </div>
+        </div>
+
+        <!-- Global Swarm Commands -->
+        <div class="pt-2 border-t border-slate-800">
+          <div class="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Comandos de Flota:</div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <button onclick="broadcastCommand('TAKEOFF')" class="py-2 bg-gradient-to-r from-cyan-900 to-sky-900 hover:from-cyan-800 hover:to-sky-800 border border-cyan-600/80 text-cyan-200 rounded-xl font-bold transition shadow-sm">
+              🚀 DESPEGUE
+            </button>
+            <button onclick="broadcastCommand('RTH')" class="py-2 bg-gradient-to-r from-amber-950 to-amber-900 hover:from-amber-900 hover:to-amber-800 border border-amber-600/80 text-amber-200 rounded-xl font-bold transition shadow-sm">
+              🏠 RETORNO (RTH)
+            </button>
+            <button onclick="broadcastCommand('LAND')" class="py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 rounded-xl font-bold transition shadow-sm">
+              🛬 ATERRIZAJE
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: OBJETIVOS IA & EVIDENCIA ==================== -->
+      <div id="panel-ai" class="hidden c2-panel p-3.5 flex-1 flex flex-col space-y-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="text-xs font-black text-white tracking-wider uppercase">Objetivos Detectados por Visión</h3>
+            <p class="text-[11px] text-slate-400">Clustering espacial (&lt;8m) y estimación cinemática</p>
+          </div>
+          <a href="/api/v1/detections/export/geojson" target="_blank" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-cyan-300 rounded-lg transition font-semibold">
+            📥 GeoJSON
+          </a>
+        </div>
+
+        <div id="targetsList" class="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[460px]">
+          <!-- Target Cards rendered here -->
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: MISIONES & BARRIDO ==================== -->
+      <div id="panel-missions" class="hidden c2-panel p-3.5 flex-1 flex flex-col space-y-3">
+        <div>
+          <h3 class="text-xs font-black text-white tracking-wider uppercase mb-1">Generador de Barrido Boustrophedon</h3>
+          <p class="text-[11px] text-slate-400 mb-2.5">Patrón de búsqueda paralelo para N drones con auto-repartición</p>
+          
+          <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 mb-2.5">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Ancho Área (m):</label>
+              <input id="gridWidth" type="number" value="180" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-cyan-300 text-xs font-mono-val">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Largo Área (m):</label>
+              <input id="gridHeight" type="number" value="150" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-cyan-300 text-xs font-mono-val">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Espaciado Líneas (m):</label>
+              <input id="gridSpacing" type="number" value="25" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-cyan-300 text-xs font-mono-val">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Altitud (m):</label>
+              <input id="gridAlt" type="number" value="30" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-cyan-300 text-xs font-mono-val">
+            </div>
+          </div>
+
+          <button onclick="submitSearchGrid()" class="w-full py-2 bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 hover:opacity-90 text-white font-extrabold rounded-xl text-xs transition shadow-md">
+            🚀 GENERAR & ASIGNAR BARRIDO AL ENJAMBRE
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto border-t border-slate-800 pt-2.5">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-[11px] font-bold text-slate-400 uppercase">Misiones Activas (SQLite):</span>
+            <button onclick="exportFirstMissionQGC()" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold underline">
+              📥 Exportar QGroundControl
+            </button>
+          </div>
+          <div id="missionsList" class="space-y-2 text-xs">
+            <!-- Missions List rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: DIAGNÓSTICO EDGE AI & MAVLINK ==================== -->
+      <div id="panel-diagnostics" class="hidden c2-panel p-3.5 flex-1 flex flex-col space-y-3">
+        <div>
+          <h3 class="text-xs font-black text-white tracking-wider uppercase mb-1">Diagnóstico Edge AI & MAVLink</h3>
+          <p class="text-[11px] text-slate-400 mb-3">Watchdog del nodo de visión por computador y autopilotos</p>
+          
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center shadow-sm">
+              <span class="text-[10px] text-slate-400 uppercase font-bold">Tasa de Inferencia</span>
+              <div id="aiMetricFps" class="text-2xl font-black text-cyan-400 font-mono-val mt-1">28.4 FPS</div>
+              <span class="text-[10px] text-emerald-400 font-semibold">Fluido en Tiempo Real</span>
+            </div>
+
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center shadow-sm">
+              <span class="text-[10px] text-slate-400 uppercase font-bold">Temperatura GPU</span>
+              <div id="aiMetricTemp" class="text-2xl font-black text-amber-400 font-mono-val mt-1">47.2 °C</div>
+              <span class="text-[10px] text-slate-400 font-semibold">Rango Seguro (&lt;70°C)</span>
+            </div>
+
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center shadow-sm">
+              <span class="text-[10px] text-slate-400 uppercase font-bold">Memoria VRAM</span>
+              <div id="aiMetricVram" class="text-2xl font-black text-sky-400 font-mono-val mt-1">2.1 GB</div>
+              <span class="text-[10px] text-slate-400 font-semibold">YOLOv11s Cargado</span>
+            </div>
+
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center shadow-sm">
+              <span class="text-[10px] text-slate-400 uppercase font-bold">Latencia Inferencia</span>
+              <div id="aiMetricLatency" class="text-2xl font-black text-emerald-400 font-mono-val mt-1">14.1 ms</div>
+              <span class="text-[10px] text-emerald-400 font-semibold">Ultra Rápido</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="simulateAIHeartbeatNow()" class="py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-bold rounded-xl text-xs transition">
+              🔄 Test Heartbeat IA
+            </button>
+            <button onclick="simulateMAVLinkPacketNow()" class="py-2 bg-blue-950 hover:bg-blue-900 border border-blue-600 text-blue-200 font-bold rounded-xl text-xs transition">
+              📡 Test MAVLink UDP
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3 bg-cyan-950/30 rounded-2xl border border-cyan-800/50 text-xs text-slate-300 space-y-1">
+          <div class="font-bold text-cyan-300">Puertos y Protocolos Activos:</div>
+          <div>• Telemetría de salud IA: <code class="text-cyan-400 font-mono-val">POST /api/v1/ai-engine/heartbeat</code></div>
+          <div>• Autopiloto Real Pixhawk: <code class="text-blue-300 font-mono-val">UDP :14550 (MAVLink v1/v2)</code></div>
+          <div>• Ingesta con snapshot: <code class="text-cyan-400 font-mono-val">POST /api/v1/detections</code></div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 5: CAJA NEGRA & AAR ==================== -->
+      <div id="panel-blackbox" class="hidden c2-panel p-3.5 flex-1 flex flex-col space-y-3">
+        <div>
+          <h3 class="text-xs font-black text-white tracking-wider uppercase mb-1">Caja Negra & Dossier AAR</h3>
+          <p class="text-[11px] text-slate-400 mb-2.5">Historial de vuelos (.jsonl) y exportación para jueces</p>
+
+          <div class="flex items-center space-x-2 mb-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-xs">
+            <span class="text-slate-400 font-semibold">Velocidad:</span>
+            <button onclick="setReplaySpeed(0.5)" class="speed-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold">0.5x</button>
+            <button onclick="setReplaySpeed(1.0)" class="speed-btn active px-2.5 py-1 rounded-lg bg-cyan-600 text-white font-bold">1.0x</button>
+            <button onclick="setReplaySpeed(2.0)" class="speed-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold">2.0x</button>
+            <button onclick="setReplaySpeed(5.0)" class="speed-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold">5.0x</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="openAARModal()" class="py-2.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:opacity-90 text-white font-black rounded-xl text-xs transition shadow-lg flex items-center justify-center space-x-1.5">
+              <span>📋</span>
+              <span>VER REPORTE AAR</span>
+            </button>
+            <a href="/api/v1/missions/ARES-MISSION-01/export/dossier" target="_blank" class="py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-90 text-white font-black rounded-xl text-xs transition shadow-lg flex items-center justify-center space-x-1.5">
+              <span>📦</span>
+              <span>DOSSIER ZIP</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1 border-t border-slate-800 pt-2.5">
+          <div class="text-[11px] font-bold text-slate-400 uppercase mb-1">Sesiones Grabadas:</div>
+          <div id="recordsList" class="space-y-1.5 text-xs">
+            <!-- Records rendered here -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==================== MODAL DE REPORTE AFTER-ACTION REVIEW (AAR) ==================== -->
+  <div id="aarModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-sky-900 border border-sky-600 flex items-center justify-center text-sky-300 text-xl font-bold shadow-md">
+            📋
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Informe Oficial After-Action Review (AAR)</h3>
+            <p class="text-xs text-slate-400">Evaluación de Misión Táctica para Jueces y Certificación</p>
+          </div>
+        </div>
+        <button onclick="closeAARModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body (Report Content) -->
+      <div id="aarModalContent" class="p-6 overflow-y-auto space-y-4 flex-1 text-slate-200 text-xs">
+        <div class="text-center py-12 text-slate-400 font-bold">Generando informe After-Action Review...</div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 border-t border-slate-800 bg-slate-950 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <a id="btnOpenFullReportHtml" href="/api/v1/missions/ARES-MISSION-01/aar-report/html" target="_blank" class="text-xs text-sky-400 hover:text-sky-300 font-bold underline">
+            ↗️ Ver Reporte Imprimible
+          </a>
+          <span class="text-slate-600">|</span>
+          <a href="/api/v1/missions/ARES-MISSION-01/export/dossier" target="_blank" class="text-xs text-emerald-400 hover:text-emerald-300 font-bold underline">
+            📦 Descargar Dossier Completo (.ZIP)
+          </a>
+        </div>
+        <button onclick="closeAARModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL DE GALERÍA PERICIAL DE EVIDENCIAS FPV ==================== -->
+  <div id="forensicModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-950 border border-indigo-600 flex items-center justify-center text-indigo-300 text-xl font-bold shadow-md">
+            📸
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Galería Pericial de Evidencias FPV (D-FINE)</h3>
+            <p class="text-xs text-slate-400">Capturas de Cámara Gimbal con Cadena de Custodia Oficial</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="captureFpvSnapshot()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-sm">
+            📸 Nueva Captura
+          </button>
+          <button onclick="closeForensicModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Grid of Snapshots) -->
+      <div id="forensicModalContent" class="p-6 overflow-y-auto space-y-4 flex-1 text-slate-200 text-xs">
+        <div class="text-center py-12 text-slate-400 font-bold">Cargando catálogo de evidencias forenses...</div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 border-t border-slate-800 bg-slate-950 flex justify-between items-center">
+        <div class="flex items-center space-x-3 text-xs text-slate-400">
+          <span>Total Archivos: <strong id="modalSnapTotalCount" class="text-indigo-400">0</strong></span>
+          <span>•</span>
+          <a href="/api/v1/missions/ARES-MISSION-01/aar-report/html" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold underline">
+            📑 Ver Informe AAR Completo con Evidencias
+          </a>
+        </div>
+        <button onclick="closeForensicModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="mt-3 text-center text-xs text-slate-500 flex flex-wrap justify-between items-center px-1">
+    <span>ARES Tactical C2 Backend • FastAPI 20Hz • Evasión Reactiva 15m (&lt;0.1ms)</span>
+    <span>Auto-Repartición en Vuelo • Relevo Táctico de Batería • MAVLink UDP :14550</span>
+  </footer>
+
+  <!-- ==================== LOGICA JAVASCRIPT & RENDERIZADO ==================== -->
+  <script>
+    const canvas = document.getElementById('radarCanvas');
+    const ctx = canvas.getContext('2d');
+    const chartCanvas = document.getElementById('chartCanvas');
+    const chartCtx = chartCanvas.getContext('2d');
+
+    const wsStatus = document.getElementById('wsStatus');
+    const frameSeq = document.getElementById('frameSeq');
+    const dronesList = document.getElementById('dronesList');
+    const alertsLog = document.getElementById('alertsLog');
+    const targetsList = document.getElementById('targetsList');
+    const aiCountBadge = document.getElementById('aiCountBadge');
+    const droneCount = document.getElementById('droneCount');
+    const modeBadge = document.getElementById('modeBadge');
+
+    // KPI Gauges & Values
+    const kpiDronesCount = document.getElementById('kpiDronesCount');
+    const kpiCoveragePct = document.getElementById('kpiCoveragePct');
+    const kpiCoveredAreaM2 = document.getElementById('kpiCoveredAreaM2');
+    const kpiAvgBattery = document.getElementById('kpiAvgBattery');
+    const kpiTargetsCount = document.getElementById('kpiTargetsCount');
+    const kpiSurvivorsBadge = document.getElementById('kpiSurvivorsBadge');
+    const kpiHazardsBadge = document.getElementById('kpiHazardsBadge');
+    const kpiSafetyStatus = document.getElementById('kpiSafetyStatus');
+
+    const gaugeCoverage = document.getElementById('gaugeCoverage');
+    const gaugeBattery = document.getElementById('gaugeBattery');
+
+    // Black Box & Replay
+    const btnRecord = document.getElementById('btnRecord');
+    const recDot = document.getElementById('recDot');
+    const recText = document.getElementById('recText');
+    const recTimer = document.getElementById('recTimer');
+    const replayBanner = document.getElementById('replayBanner');
+    const replaySessionName = document.getElementById('replaySessionName');
+    const replaySpeedBadge = document.getElementById('replaySpeedBadge');
+    const replayProgressBar = document.getElementById('replayProgressBar');
+
+    let swarmData = null;
+    let knownTargets = [];
+    let knownGeofences = [];
+    let activeMissionWaypoints = [];
+    let showCoverageFootprint = true;
+    let showFrustum = true;
+    let isRecording = false;
+    let recordStartTime = 0;
+    let recordTimerInterval = null;
+    let replaySpeed = 1.0;
+    const METERS_TO_PX = 3.2;
+
+    // --- SISTEMA DE VOZ TÁCTICA (WEB SPEECH & WEB AUDIO API) ---
+    let isVoiceEnabled = true;
+    let audioCtx = null;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playRadioChirp() {
+      try {
+        initAudioContext();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1250, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {
+        console.log("Audio not allowed yet:", e);
+      }
+    }
+
+    function speakTacticalAlert(text) {
+      if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+      playRadioChirp();
+      setTimeout(() => {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1.05;
+        utter.pitch = 1.0;
+        utter.lang = 'es-ES';
+        window.speechSynthesis.speak(utter);
+      }, 130);
+    }
+
+    function toggleVoice() {
+      isVoiceEnabled = !isVoiceEnabled;
+      const icon = document.getElementById('voiceIcon');
+      const txt = document.getElementById('voiceText');
+      if (isVoiceEnabled) {
+        icon.textContent = '🔊';
+        txt.textContent = 'VOZ ON';
+        speakTacticalAlert("Sistema de audio táctico activado.");
+      } else {
+        icon.textContent = '🔇';
+        txt.textContent = 'VOZ OFF';
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    // --- MODO DIBUJO DE POLÍGONO DE BARRIDO ("CLICK-TO-SWEEP") ---
+    let isDrawingMode = false;
+    let drawnVertices = [];
+
+    function toggleDrawingMode() {
+      isDrawingMode = !isDrawingMode;
+      drawnVertices = [];
+      const banner = document.getElementById('drawingModeBanner');
+      const btn = document.getElementById('btnDrawSweep');
+      const btnText = document.getElementById('btnDrawText');
+      const finishBtn = document.getElementById('btnFinishDrawing');
+      document.getElementById('drawnVerticesCount').textContent = '0';
+
+      if (isDrawingMode) {
+        banner.classList.remove('hidden');
+        btn.classList.replace('bg-amber-950/70', 'bg-rose-900') || btn.classList.add('bg-rose-900');
+        btnText.textContent = 'Cancelar Dibujo';
+        finishBtn.classList.add('hidden');
+        canvas.style.cursor = 'crosshair';
+        speakTacticalAlert("Modo de dibujo de zona activado. Haz clic en el radar.");
+      } else {
+        banner.classList.add('hidden');
+        btn.classList.replace('bg-rose-900', 'bg-amber-950/70');
+        btnText.textContent = 'Dibujar Zona Sweep';
+        canvas.style.cursor = 'default';
+        drawRadar(swarmData ? swarmData.drones || [] : []);
+      }
+    }
+
+    canvas.addEventListener('click', (evt) => {
+      if (!isDrawingMode || !swarmData || !swarmData.drones || swarmData.drones.length === 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mouseX = (evt.clientX - rect.left) * scaleX;
+      const mouseY = (evt.clientY - rect.top) * scaleY;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const dxMeters = (mouseX - cx) / METERS_TO_PX;
+      const dyMeters = (cy - mouseY) / METERS_TO_PX;
+
+      const baseLat = swarmData.drones[0].lat;
+      const baseLon = swarmData.drones[0].lon;
+
+      const clickLat = baseLat + (dyMeters / 111139.0);
+      const clickLon = baseLon + (dxMeters / (111139.0 * Math.cos(baseLat * Math.PI / 180)));
+
+      drawnVertices.push({ lat: clickLat, lon: clickLon, x: mouseX, y: mouseY });
+      document.getElementById('drawnVerticesCount').textContent = drawnVertices.length;
+
+      if (drawnVertices.length >= 3) {
+        document.getElementById('btnFinishDrawing').classList.remove('hidden');
+      }
+      drawRadar(swarmData.drones);
+    });
+
+    async function finishDrawingAndGenerate() {
+      if (drawnVertices.length < 3) return;
+      toggleDrawingMode();
+      try {
+        const payload = {
+          mission_name: "Barrido por Clic en Radar",
+          assigned_drone_ids: ["ARES-01", "ARES-02", "ARES-03"],
+          polygon_vertices: drawnVertices.map(v => ({ lat: v.lat, lon: v.lon })),
+          swath_spacing_m: 25.0,
+          altitude_m: 30.0
+        };
+        const res = await fetch('/api/v1/missions/generate-search-grid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const m = await res.json();
+          activeMissionWaypoints = Object.values(m.drone_waypoints || {});
+          logAlert(`[🚀 MALLA POR CLIC] Misión ${m.mission_id} generada con ${m.total_waypoints} waypoints`, 'text-emerald-400 font-bold');
+          speakTacticalAlert("Malla de búsqueda adaptada al polígono del operador y asignada al enjambre.");
+          loadMissions();
+        }
+      } catch (err) {
+        console.error("Error creating drawn grid:", err);
+      }
+    }
+
+    // --- SPARKLINE TELEMETRY BUFFER (LAST 50 FRAMES) ---
+    const MAX_HISTORY = 50;
+    const telemetryHistory = {
+      'ARES-01': [],
+      'ARES-02': [],
+      'ARES-03': []
+    };
+
+    // --- TEMA CLARO / OSCURO ---
+    function initTheme() {
+      const saved = localStorage.getItem('ares_theme') || 'dark';
+      applyTheme(saved);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.classList.contains('light') ? 'light' : 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem('ares_theme', next);
+    }
+
+    function applyTheme(theme) {
+      const icon = document.getElementById('themeIcon');
+      const text = document.getElementById('themeText');
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        icon.textContent = '🌙';
+        text.textContent = 'MODO NOCHE';
+      } else {
+        document.documentElement.classList.remove('light');
+        document.documentElement.classList.add('dark');
+        icon.textContent = '☀️';
+        text.textContent = 'MODO LUZ';
+      }
+      if (swarmData) {
+        renderHUD(swarmData);
+      }
+    }
+
+    // --- PESTAÑAS ---
+    function switchTab(tabName) {
+      ['fleet', 'ai', 'missions', 'diagnostics', 'blackbox'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+        if (btn && panel) {
+          if (t === tabName) {
+            btn.classList.add('active');
+            panel.classList.remove('hidden');
+          } else {
+            btn.classList.remove('active');
+            panel.classList.add('hidden');
+          }
+        }
+      });
+      if (tabName === 'missions') loadMissions();
+      if (tabName === 'diagnostics') loadAIDiagnostics();
+      if (tabName === 'blackbox') loadRecordings();
+    }
+
+    function toggleCoverageFootprint() {
+      showCoverageFootprint = document.getElementById('chkCoverage').checked;
+      if (swarmData) drawRadar(swarmData.drones || []);
+    }
+
+    function toggleFrustum() {
+      showFrustum = document.getElementById('chkFrustum').checked;
+      if (swarmData) drawRadar(swarmData.drones || []);
+    }
+
+    // --- WEBSOCKET CONNECTION ---
+    function connectWS() {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${proto}//${window.location.host}/ws/telemetry`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        wsStatus.textContent = 'CONECTADO';
+        wsStatus.className = 'font-bold text-emerald-400';
+      };
+
+      ws.onmessage = (evt) => {
+        try {
+          const payload = JSON.parse(evt.data);
+
+          if (payload.event_type === 'TARGET_ACQUIRED') {
+            logAlert(`[🎯 TARGET ACQUIRED] ${payload.target_class} (${Math.round(payload.confidence * 100)}%)`, 'text-rose-400 font-bold');
+            speakTacticalAlert(`Atención: ${payload.target_class} confirmado por ${payload.reported_by}. Coordenadas fijadas.`);
+            loadInitialDetections();
+            return;
+          }
+          if (payload.event_type === 'TARGET_UPDATED') {
+            logAlert(`[🔄 TARGET CLUSTERED] ${payload.target_class} avistado x${payload.observation_count}`, 'text-cyan-300');
+            loadInitialDetections();
+            return;
+          }
+          if (payload.event_type === 'DYNAMIC_NFZ_CREATED') {
+            logAlert(`[🛡️ NFZ DINÁMICA] Zona de exclusión por fuego creada (${payload.name})`, 'text-red-400 font-bold');
+            speakTacticalAlert("Alerta táctica: Fuego detectado. Zona de exclusión circular desplegada.");
+            loadGeofences();
+            return;
+          }
+          if (payload.event_type === 'SWARM_SELF_HEALED') {
+            logAlert(payload.message, 'text-amber-300 font-bold');
+            speakTacticalAlert(`Alerta: Fallo en ${payload.failed_drone}. Enjambre autorreparado y sectores redistribuidos.`);
+            loadMissions();
+            return;
+          }
+          if (payload.event_type === 'BATTERY_HANDOVER') {
+            logAlert(payload.message, 'text-emerald-400 font-bold');
+            speakTacticalAlert(`Batería crítica en ${payload.low_battery_drone}. Relevo autónomo iniciado por ${payload.relief_drone}.`);
+            return;
+          }
+          if (payload.event_type === 'AI_HEARTBEAT') {
+            updateAIHeaderStatus(payload.status);
+            return;
+          }
+          if (payload.event_type === 'REPLAY_FINISHED') {
+            logAlert(`[📼 REPLAY COMPLETADO] Retornando a telemetría en vivo.`, 'text-emerald-400 font-bold');
+            speakTacticalAlert("Reproducción finalizada. Reanudando telemetría en vivo.");
+            stopReplayUI();
+            return;
+          }
+
+          // Telemetry Frame
+          swarmData = payload;
+          renderHUD(payload);
+        } catch (err) {
+          console.error('Error parsing frame:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        wsStatus.textContent = 'RECONECTANDO...';
+        wsStatus.className = 'font-bold text-amber-400';
+        setTimeout(connectWS, 1500);
+      };
+    }
+
+    // --- CARGA DE DATOS REST ---
+    async function loadInitialDetections() {
+      try {
+        const res = await fetch('/api/v1/detections');
+        if (res.ok) {
+          knownTargets = await res.json();
+          renderTargetsUI();
+        }
+      } catch (err) {
+        console.error('Failed to load detections:', err);
+      }
+    }
+
+    async function loadGeofences() {
+      try {
+        const res = await fetch('/api/v1/geofences');
+        if (res.ok) {
+          knownGeofences = await res.json();
+        }
+      } catch (err) {
+        console.error('Failed to load geofences:', err);
+      }
+    }
+
+    async function loadMissions() {
+      try {
+        const res = await fetch('/api/v1/missions');
+        if (res.ok) {
+          const missions = await res.json();
+          renderMissionsUI(missions);
+        }
+      } catch (err) {
+        console.error('Failed to load missions:', err);
+      }
+    }
+
+    async function loadRecordings() {
+      try {
+        const res = await fetch('/api/v1/recorder/sessions');
+        if (res.ok) {
+          const sessions = await res.json();
+          renderRecordingsUI(sessions);
+        }
+      } catch (err) {
+        console.error('Failed to load recordings:', err);
+      }
+    }
+
+    async function loadAIDiagnostics() {
+      try {
+        const res = await fetch('/api/v1/ai-engine/status');
+        if (res.ok) {
+          const status = await res.json();
+          updateAIHeaderStatus(status);
+        }
+      } catch (err) {
+        console.error('Failed to load AI status:', err);
+      }
+    }
+
+    function updateAIHeaderStatus(st) {
+      if (!st) return;
+      const chip = document.getElementById('aiModelStatus');
+      const fps = document.getElementById('aiFpsChip');
+      const pulse = document.getElementById('aiPulse');
+      
+      if (st.is_online) {
+        chip.textContent = `${st.model_name}`;
+        chip.className = 'font-bold text-cyan-300';
+        fps.textContent = `${st.fps} FPS`;
+        pulse.className = 'w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse';
+      } else {
+        chip.textContent = 'OFFLINE';
+        chip.className = 'font-bold text-red-400';
+        fps.textContent = '0.0 FPS';
+        pulse.className = 'w-2.5 h-2.5 rounded-full bg-red-500';
+      }
+
+      const dFps = document.getElementById('aiMetricFps');
+      const dTemp = document.getElementById('aiMetricTemp');
+      const dVram = document.getElementById('aiMetricVram');
+      const dLat = document.getElementById('aiMetricLatency');
+      if (dFps) dFps.textContent = `${st.fps} FPS`;
+      if (dTemp) dTemp.textContent = `${st.gpu_temp_c} °C`;
+      if (dVram) dVram.textContent = `${(st.vram_usage_mb / 1024).toFixed(1)} GB`;
+      if (dLat) dLat.textContent = `${st.last_inference_latency_ms} ms`;
+    }
+
+    // --- RENDER HUD ---
+    function renderHUD(frame) {
+      frameSeq.textContent = frame.frame_sequence || 0;
+      const drones = frame.drones || [];
+      const alerts = frame.active_alerts || [];
+      const gfAlerts = frame.geofence_alerts || [];
+
+      droneCount.textContent = drones.length;
+      kpiDronesCount.textContent = drones.length;
+
+      // Update Coverage KPI & Donut
+      const covPct = frame.coverage_pct !== undefined ? frame.coverage_pct : 0.0;
+      kpiCoveragePct.textContent = `${covPct}%`;
+      kpiCoveredAreaM2.textContent = `${frame.covered_area_m2 || 0} m² explorados`;
+      
+      const covOffset = Math.max(0, 88 - (covPct / 100) * 88);
+      gaugeCoverage.style.strokeDashoffset = covOffset;
+
+      // Calculate Average Battery
+      let totalBat = 0;
+      drones.forEach(d => totalBat += d.battery);
+      const avgBat = drones.length > 0 ? Math.round(totalBat / drones.length) : 100;
+      kpiAvgBattery.textContent = `${avgBat}%`;
+      const batOffset = Math.max(0, 88 - (avgBat / 100) * 88);
+      gaugeBattery.style.strokeDashoffset = batOffset;
+
+      if (avgBat > 60) gaugeBattery.classList.replace('stroke-amber-400', 'stroke-emerald-400') || gaugeBattery.classList.add('stroke-emerald-400');
+      else if (avgBat > 25) gaugeBattery.classList.replace('stroke-emerald-400', 'stroke-amber-400') || gaugeBattery.classList.add('stroke-amber-400');
+      else gaugeBattery.classList.replace('stroke-emerald-400', 'stroke-rose-500') || gaugeBattery.classList.add('stroke-rose-500');
+
+      // Handle Replay Indicator
+      if (frame.is_replay) {
+        replayBanner.classList.remove('hidden');
+        replaySessionName.textContent = frame.replay_session || 'Desconocida';
+        replayProgressBar.style.width = `${frame.replay_progress_pct || 0}%`;
+        modeBadge.textContent = 'MODO REPLAY';
+        modeBadge.className = 'px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-amber-950 text-amber-300 border border-amber-600/80';
+      } else {
+        replayBanner.classList.add('hidden');
+        modeBadge.textContent = 'EN VUELO';
+        modeBadge.className = 'px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600';
+      }
+
+      // Update Wind & EW Header Chips
+      const windChip = document.getElementById('windHeaderChip');
+      if (windChip && frame.wind_speed_ms !== undefined) {
+        windChip.textContent = `${frame.wind_speed_ms} m/s @ ${frame.wind_dir_deg || 0}°`;
+      }
+      const ewChip = document.getElementById('ewHeaderChip');
+      if (ewChip && frame.ew_threat_level) {
+        if (frame.ew_threat_level.includes('HOSTIL')) {
+          ewChip.textContent = '🚨 EW HOSTIL';
+          ewChip.className = 'font-black text-rose-400 animate-pulse';
+        } else {
+          ewChip.textContent = 'NOMINAL';
+          ewChip.className = 'font-bold text-emerald-400';
+        }
+      }
+
+      // Safety status
+      if (alerts.length > 0) {
+        kpiSafetyStatus.textContent = 'EVASIÓN';
+        kpiSafetyStatus.className = 'text-xl font-black text-rose-400 animate-pulse';
+        alerts.forEach(a => {
+          logAlert(`⚠️ BURBUJA 15M: ${a.drone_a_id} <-> ${a.drone_b_id} (${a.distance_m}m)`, 'text-red-400 font-bold');
+        });
+      } else {
+        kpiSafetyStatus.textContent = 'SEGURA';
+        kpiSafetyStatus.className = 'text-xl font-black text-emerald-400';
+      }
+
+      // Geofence alerts
+      if (gfAlerts.length > 0) {
+        gfAlerts.forEach(g => {
+          const color = g.breach_type === 'KEEP_OUT_INTRUSION' ? 'text-red-400 font-bold' : 'text-amber-400';
+          logAlert(`🛡️ GEOFENCE: ${g.message}`, color);
+        });
+      }
+
+      // Record Sparkline History
+      drones.forEach(d => {
+        if (!telemetryHistory[d.drone_id]) telemetryHistory[d.drone_id] = [];
+        telemetryHistory[d.drone_id].push({ alt: d.alt, speed: d.speed_ms });
+        if (telemetryHistory[d.drone_id].length > MAX_HISTORY) telemetryHistory[d.drone_id].shift();
+      });
+      drawSparklineChart();
+
+      // Render Drone List Cards
+      let html = '';
+      drones.forEach(d => {
+        const isDark = !document.documentElement.classList.contains('light');
+        const breachClass = d.in_safety_breach ? 'border-red-500 bg-red-950/40 shadow-red-500/20' : (isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-200 bg-white');
+        const badgeColor = d.fsm_state === 'AVOIDING' ? 'bg-red-900/80 text-red-200 border-red-500' :
+                           d.fsm_state === 'ROUTING' ? 'bg-amber-900/80 text-amber-200 border-amber-500' :
+                           d.fsm_state === 'IN_FLIGHT' ? 'bg-emerald-900/80 text-emerald-200 border-emerald-500' :
+                           d.fsm_state === 'RTH' ? 'bg-sky-900/80 text-sky-200 border-sky-500' :
+                           d.fsm_state === 'GPS_DENIED' ? 'bg-red-950 text-red-100 border-red-500 animate-pulse font-black' :
+                           d.fsm_state === 'EMERGENCY' ? 'bg-red-950 text-red-200 border-red-600 animate-pulse' : 'bg-slate-800 text-slate-300 border-slate-700';
+
+        const batColor = d.battery > 60 ? 'text-emerald-400' : d.battery > 25 ? 'text-amber-400' : 'text-red-400';
+        const batBarBg = d.battery > 60 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : d.battery > 25 ? 'bg-amber-500' : 'bg-rose-500';
+
+        // PNR & EW calculation
+        const pnrCol = d.pnr_status === 'BREACHED' || d.pnr_status === 'CRITICAL' ? 'text-rose-400 font-bold' : (d.pnr_status === 'ADVISORY' ? 'text-amber-400' : 'text-emerald-400');
+        const pnrSign = (d.pnr_margin_pct > 0 ? '+' : '');
+        const pnrText = d.pnr_margin_pct !== undefined && d.pnr_margin_pct !== null ? `${pnrSign}${d.pnr_margin_pct}%` : 'N/A';
+
+        const gpsBadge = d.gps_denied ?
+          '<span class="text-rose-400 font-extrabold animate-pulse">🚨 GPS DENIED (Dead Reckoning)</span>' :
+          (d.sat_count < 8 ? '<span class="text-amber-400 font-bold">⚠️ GPS DEGRADADO</span>' : '<span class="text-emerald-400 font-semibold">🛰️ ' + (d.sat_count || 16) + ' Sats FIX</span>');
+
+        html += `
+          <div class="p-3 rounded-2xl border ${breachClass} text-xs transition shadow-sm">
+            <div class="flex justify-between items-center mb-1.5">
+              <div class="flex items-center space-x-2">
+                <span class="font-black text-sm tracking-wide text-white">${d.drone_id}</span>
+                ${d.is_external ? '<span class="px-1.5 py-0.2 text-[9px] bg-blue-900 text-blue-200 border border-blue-600 rounded">LIVE MAV</span>' : ''}
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${badgeColor}">${d.fsm_state}</span>
+            </div>
+
+            <div class="mb-2">
+              <div class="flex justify-between text-[11px] mb-0.5">
+                <span class="text-slate-400 font-medium">Batería:</span>
+                <strong class="${batColor} font-mono-val">${d.battery}%</strong>
+              </div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="${batBarBg} h-full transition-all duration-300" style="width: ${d.battery}%"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1 text-[11px] text-slate-300 bg-black/20 p-2 rounded-xl border border-slate-800/60">
+              <div>Alt: <strong class="text-amber-300">${d.alt}m</strong></div>
+              <div>Vel: <strong class="text-cyan-300">${d.speed_ms}m/s</strong></div>
+              <div>Rumbo: <strong class="text-slate-400">${d.orientation?.yaw || 0}°</strong></div>
+            </div>
+
+            <!-- Dynamic PNR & GPS Health Row -->
+            <div class="mt-2 flex justify-between items-center text-[10px] bg-black/30 px-2.5 py-1.5 rounded-xl border border-slate-800/80">
+              <div class="flex items-center space-x-1">
+                <span class="text-slate-400 font-semibold">PNR:</span>
+                <strong class="${pnrCol}">${pnrText} [${d.pnr_status || 'OK'}]</strong>
+              </div>
+              <div>${gpsBadge}</div>
+            </div>
+
+            <!-- FPV Camera Quick Button -->
+            <button onclick="openDroneCamera('${d.drone_id}')" class="mt-2 w-full py-1.5 bg-gradient-to-r from-cyan-950 to-slate-900 hover:from-cyan-900 hover:to-slate-800 border border-cyan-700/70 text-cyan-200 text-[11px] font-bold rounded-xl transition flex items-center justify-center space-x-1.5 shadow-sm">
+              <span>📹</span>
+              <span>Ver Cámara FPV & D-FINE</span>
+            </button>
+
+            ${d.in_safety_breach ? `
+              <div class="mt-2 text-[10px] text-red-400 font-bold flex items-center space-x-1 animate-pulse">
+                <span>⚠️ COLISIÓN &lt;15M: ${d.nearest_distance_m}m con ${d.nearest_peer_id} (EVADIENDO)</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      dronesList.innerHTML = html;
+
+      drawRadar(drones);
+      if (currentAirspaceView === 'map') {
+        updateLeafletMap(drones);
+      }
+    }
+
+    // --- SPARKLINE TELEMETRY CHART CANVAS ---
+    function drawSparklineChart() {
+      const w = chartCanvas.width;
+      const h = chartCanvas.height;
+      chartCtx.clearRect(0, 0, w, h);
+
+      chartCtx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+      chartCtx.lineWidth = 1;
+      chartCtx.beginPath();
+      chartCtx.moveTo(0, h / 2);
+      chartCtx.lineTo(w, h / 2);
+      chartCtx.stroke();
+
+      const droneColors = {
+        'ARES-01': '#06b6d4',
+        'ARES-02': '#f59e0b',
+        'ARES-03': '#a855f7'
+      };
+
+      Object.keys(telemetryHistory).forEach(dId => {
+        const hist = telemetryHistory[dId];
+        if (!hist || hist.length < 2) return;
+
+        chartCtx.strokeStyle = droneColors[dId] || '#38bdf8';
+        chartCtx.lineWidth = 2;
+        chartCtx.beginPath();
+
+        const step = w / (MAX_HISTORY - 1);
+        hist.forEach((pt, i) => {
+          const x = i * step;
+          const y = h - ((pt.alt - 15) / 30) * (h - 8) - 4;
+          if (i === 0) chartCtx.moveTo(x, y);
+          else chartCtx.lineTo(x, y);
+        });
+        chartCtx.stroke();
+      });
+    }
+
+    // --- CANVAS RADAR DRAWING WITH FRUSTUM, DRAWING MODE & TARGETS ---
+    function drawRadar(drones) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const isLight = document.documentElement.classList.contains('light');
+      const ringColor = isLight ? 'rgba(2, 132, 199, 0.16)' : 'rgba(6, 182, 212, 0.18)';
+      const crossColor = isLight ? 'rgba(2, 132, 199, 0.25)' : 'rgba(6, 182, 212, 0.25)';
+
+      // 1. Distance Rings
+      [50, 100, 150, 200, 250].forEach((r) => {
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = isLight ? '#94a3b8' : '#64748b';
+        ctx.font = '10px sans-serif';
+        const distMeters = Math.round(r / METERS_TO_PX);
+        ctx.fillText(`${distMeters}m`, cx + 4, cy - r + 12);
+      });
+
+      // Crosshair
+      ctx.strokeStyle = crossColor;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - 15, cy);
+      ctx.lineTo(cx + 15, cy);
+      ctx.moveTo(cx, cy - 15);
+      ctx.lineTo(cx + 15, cy);
+      ctx.stroke();
+
+      if (drones.length === 0) return;
+
+      const baseLat = drones[0].lat;
+      const baseLon = drones[0].lon;
+
+      function toScreen(lat, lon) {
+        const dy = (lat - baseLat) * 111139.0;
+        const dx = (lon - baseLon) * (111139.0 * Math.cos(baseLat * Math.PI / 180));
+        return {
+          x: cx + dx * METERS_TO_PX,
+          y: cy - dy * METERS_TO_PX
+        };
+      }
+
+      // 2. DRAW REAL-TIME COVERAGE FOOTPRINT
+      if (showCoverageFootprint) {
+        drones.forEach(d => {
+          const pt = toScreen(d.lat, d.lon);
+          const footprintR = Math.max(16, d.alt * 0.6 * METERS_TO_PX);
+          const grad = ctx.createRadialGradient(pt.x, pt.y, 2, pt.x, pt.y, footprintR);
+          grad.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+          grad.addColorStop(0.7, 'rgba(6, 182, 212, 0.10)');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, footprintR, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      // 3. DRAW 3D CAMERA FRUSTUM TRAPEZOID
+      if (showFrustum) {
+        drones.forEach(d => {
+          const pt = toScreen(d.lat, d.lon);
+          const headingRad = (d.orientation?.yaw || 0) * Math.PI / 180;
+          const altPx = d.alt * METERS_TO_PX;
+
+          const nearDist = altPx * 0.4;
+          const farDist = altPx * 1.3;
+          const nearWidth = altPx * 0.35;
+          const farWidth = altPx * 0.95;
+
+          const fwdX = Math.sin(headingRad);
+          const fwdY = -Math.cos(headingRad);
+          const rgtX = Math.cos(headingRad);
+          const rgtY = Math.sin(headingRad);
+
+          const p1 = { x: pt.x + fwdX * nearDist - rgtX * nearWidth, y: pt.y + fwdY * nearDist - rgtY * nearWidth };
+          const p2 = { x: pt.x + fwdX * nearDist + rgtX * nearWidth, y: pt.y + fwdY * nearDist + rgtY * nearWidth };
+          const p3 = { x: pt.x + fwdX * farDist + rgtX * farWidth, y: pt.y + fwdY * farDist + rgtY * farWidth };
+          const p4 = { x: pt.x + fwdX * farDist - rgtX * farWidth, y: pt.y + fwdY * farDist - rgtY * farWidth };
+
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.lineTo(p4.x, p4.y);
+          ctx.closePath();
+
+          ctx.fillStyle = isLight ? 'rgba(2, 132, 199, 0.12)' : 'rgba(6, 182, 212, 0.12)';
+          ctx.strokeStyle = isLight ? 'rgba(2, 132, 199, 0.35)' : 'rgba(6, 182, 212, 0.35)';
+          ctx.lineWidth = 1;
+          ctx.fill();
+          ctx.stroke();
+        });
+      }
+
+      // 4. DRAW DRAWN CUSTOM SEARCH POLYGON (IF IN DRAWING MODE)
+      if (drawnVertices.length > 0) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        drawnVertices.forEach((v, idx) => {
+          const pt = toScreen(v.lat, v.lon);
+          if (idx === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        if (drawnVertices.length >= 3) {
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        drawnVertices.forEach((v, idx) => {
+          const pt = toScreen(v.lat, v.lon);
+          ctx.fillStyle = '#f59e0b';
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText(`P${idx+1}`, pt.x + 8, pt.y - 4);
+        });
+      }
+
+      // 5. DRAW GEOFENCES & NO-FLY ZONES
+      knownGeofences.forEach(gf => {
+        if (!gf.polygon || gf.polygon.length < 3) return;
+        ctx.beginPath();
+        const start = toScreen(gf.polygon[0].lat, gf.polygon[0].lon);
+        ctx.moveTo(start.x, start.y);
+        for (let i = 1; i < gf.polygon.length; i++) {
+          const pt = toScreen(gf.polygon[i].lat, gf.polygon[i].lon);
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.closePath();
+
+        if (gf.fence_type === 'KEEP_OUT') {
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2;
+        } else {
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.05)';
+          ctx.strokeStyle = '#06b6d4';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = gf.fence_type === 'KEEP_OUT' ? '#ef4444' : '#06b6d4';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(`🛡️ ${gf.name}`, start.x + 6, start.y - 6);
+      });
+
+      // 6. DRAW SEARCH GRID WAYPOINTS
+      activeMissionWaypoints.forEach((wps, idx) => {
+        if (!wps || wps.length < 2) return;
+        ctx.strokeStyle = idx === 0 ? 'rgba(34, 211, 238, 0.45)' : idx === 1 ? 'rgba(245, 158, 11, 0.45)' : 'rgba(16, 185, 129, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        const start = toScreen(wps[0].lat, wps[0].lon);
+        ctx.moveTo(start.x, start.y);
+        for (let i = 1; i < wps.length; i++) {
+          const pt = toScreen(wps[i].lat, wps[i].lon);
+          ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // 7. DRAW AI DETECTED TARGETS
+      knownTargets.forEach(t => {
+        const pt = toScreen(t.estimated_lat, t.estimated_lon);
+        const isFire = t.target_class === 'FIRE_HAZARD';
+        const isSurvivor = t.target_class === 'SURVIVOR';
+
+        ctx.save();
+        ctx.translate(pt.x, pt.y);
+
+        if (isSurvivor) {
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        } else if (isFire) {
+          ctx.fillStyle = '#ef4444';
+          ctx.rotate(Math.PI / 4);
+          ctx.fillRect(-7, -7, 14, 14);
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(-6, -6, 12, 12);
+        }
+        ctx.restore();
+
+        ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc';
+        ctx.font = 'bold 11px sans-serif';
+        const icon = isSurvivor ? '🟢' : isFire ? '🔥' : '🎯';
+        const obs = t.observation_count > 1 ? ` (x${t.observation_count})` : '';
+        ctx.fillText(`${icon} ${t.target_class}${obs}`, pt.x + 12, pt.y + 4);
+      });
+
+      // 8. DRAW SWARM DRONES
+      drones.forEach(d => {
+        const pt = toScreen(d.lat, d.lon);
+        const bubblePx = 15.0 * METERS_TO_PX;
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, bubblePx, 0, Math.PI * 2);
+        if (d.in_safety_breach) {
+          ctx.strokeStyle = '#ef4444';
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+        } else {
+          ctx.strokeStyle = isLight ? 'rgba(2, 132, 199, 0.35)' : 'rgba(6, 182, 212, 0.4)';
+          ctx.fillStyle = isLight ? 'rgba(2, 132, 199, 0.05)' : 'rgba(6, 182, 212, 0.05)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (d.evasion_vector) {
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(pt.x, pt.y);
+          ctx.lineTo(pt.x + d.evasion_vector.x * 8, pt.y - d.evasion_vector.y * 8);
+          ctx.stroke();
+        }
+
+        const headingRad = (d.orientation?.yaw || 0) * Math.PI / 180;
+        const arrowLen = 16;
+        const hx = pt.x + Math.sin(headingRad) * arrowLen;
+        const hy = pt.y - Math.cos(headingRad) * arrowLen;
+
+        ctx.strokeStyle = d.in_safety_breach ? '#ef4444' : (isLight ? '#0284c7' : '#00f0ff');
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(pt.x, pt.y);
+        ctx.lineTo(hx, hy);
+        ctx.stroke();
+
+        ctx.fillStyle = d.in_safety_breach ? '#ef4444' : (isLight ? '#0284c7' : '#06b6d4');
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(`${d.drone_id} (${d.alt}m)`, pt.x + 10, pt.y - 6);
+      });
+    }
+
+    // --- RENDER TARGETS LIST ---
+    function renderTargetsUI() {
+      aiCountBadge.textContent = knownTargets.length;
+      kpiTargetsCount.textContent = knownTargets.length;
+
+      const survivors = knownTargets.filter(t => t.target_class === 'SURVIVOR').length;
+      const hazards = knownTargets.filter(t => t.target_class === 'FIRE_HAZARD').length;
+
+      kpiSurvivorsBadge.textContent = `${survivors} supervivientes`;
+      kpiHazardsBadge.textContent = `${hazards} peligros NFZ`;
+
+      if (knownTargets.length === 0) {
+        targetsList.innerHTML = '<div class="text-center text-slate-500 py-12 text-xs">No hay objetivos registrados. Inyecta una detección con los botones rápidos.</div>';
+        return;
+      }
+
+      let html = '';
+      knownTargets.forEach(t => {
+        const isSurvivor = t.target_class === 'SURVIVOR';
+        const priorityColor = t.priority === 'CRITICAL' ? 'bg-rose-950 text-rose-300 border-rose-700' :
+                              t.priority === 'HIGH' ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-cyan-950 text-cyan-300 border-cyan-800';
+
+        html += `
+          <div class="p-3 rounded-2xl border border-slate-700/80 bg-slate-900/80 text-xs shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-sm ${isSurvivor ? 'text-emerald-400' : 'text-rose-400'} flex items-center">
+                ${isSurvivor ? '🟢' : '🔥'} ${t.target_class}
+                ${t.observation_count > 1 ? `<span class="ml-2 text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-700 font-bold">x${t.observation_count} avistamientos</span>` : ''}
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${priorityColor}">${t.priority}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-300 bg-black/20 p-2 rounded-xl border border-slate-800">
+              <div>Certeza: <strong class="text-cyan-300">${Math.round(t.confidence * 100)}%</strong></div>
+              <div>Reportado por: <strong class="text-slate-300">${t.drone_id}</strong></div>
+              <div class="col-span-2">Coords: <span class="font-mono-val text-slate-400">${t.estimated_lat.toFixed(5)}, ${t.estimated_lon.toFixed(5)}</span></div>
+            </div>
+
+            <div class="flex justify-between items-center pt-1">
+              <span class="text-[10px] text-slate-400">Estado: <strong class="text-white">${t.status}</strong></span>
+              <button onclick="assignDroneToTarget('${t.detection_id}', 'ARES-01')" class="px-3 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-200 rounded-lg font-bold text-[11px] transition">
+                ⚡ Despachar Dron
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      targetsList.innerHTML = html;
+    }
+
+    // --- RENDER MISSIONS LIST ---
+    function renderMissionsUI(missions) {
+      if (!missions || missions.length === 0) {
+        document.getElementById('missionsList').innerHTML = '<div class="text-center text-slate-500 py-6">No hay misiones guardadas en SQLite.</div>';
+        return;
+      }
+
+      let html = '';
+      missions.forEach(m => {
+        html += `
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-cyan-300">${m.mission_name}</div>
+              <div class="text-[10px] text-slate-400">${m.mission_id} • ${m.total_waypoints} waypoints • ${m.assigned_drones.join(', ')}</div>
+            </div>
+            <a href="/api/v1/missions/${m.mission_id}/export/qgc" target="_blank" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[10px] font-bold transition">
+              📥 QGC
+            </a>
+          </div>
+        `;
+      });
+      document.getElementById('missionsList').innerHTML = html;
+    }
+
+    // --- RENDER RECORDINGS LIST ---
+    function renderRecordingsUI(sessions) {
+      if (!sessions || sessions.length === 0) {
+        document.getElementById('recordsList').innerHTML = '<div class="text-center text-slate-500 py-6">No hay sesiones grabadas (.jsonl).</div>';
+        return;
+      }
+
+      let html = '';
+      sessions.forEach(s => {
+        html += `
+          <div class="p-2.5 bg-slate-900/90 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-amber-300 font-mono-val">${s.session_id}</div>
+              <div class="text-[10px] text-slate-400">${s.frame_count} frames • ${(s.file_size_bytes / 1024).toFixed(1)} KB</div>
+            </div>
+            <button onclick="startReplaySession('${s.session_id}')" class="px-3 py-1 bg-amber-950 hover:bg-amber-900 border border-amber-600 text-amber-200 font-bold rounded-xl text-xs transition">
+              ▶️ Play
+            </button>
+          </div>
+        `;
+      });
+      document.getElementById('recordsList').innerHTML = html;
+    }
+
+    // --- CHAOS ENGINEERING TRIGGER ACTIONS ---
+    async function triggerChaosFailure(droneId = 'ARES-02') {
+      try {
+        const res = await fetch(`/api/v1/chaos/inject-drone-failure?drone_id=${droneId}`, { method: 'POST' });
+        if (res.ok) {
+          const d = await res.json();
+          logAlert(`[💥 CAOS] Fallo inyectado en ${d.failed_drone}. Malla redistribuida entre ${d.surviving_drones.join(', ')}`, 'text-rose-400 font-bold');
+          loadMissions();
+        }
+      } catch (err) {
+        console.error('Error triggering failure:', err);
+      }
+    }
+
+    async function triggerChaosBatteryDrain(droneId = 'ARES-01') {
+      try {
+        const res = await fetch(`/api/v1/chaos/inject-battery-drain?drone_id=${droneId}&target_battery=16.0`, { method: 'POST' });
+        if (res.ok) {
+          const d = await res.json();
+          logAlert(`[🔋 CAOS] Batería de ${droneId} drenada al 16%. Relevo autónomo activado.`, 'text-amber-400 font-bold');
+        }
+      } catch (err) {
+        console.error('Error draining battery:', err);
+      }
+    }
+
+    async function triggerDetectionBurst(count = 10) {
+      try {
+        const res = await fetch(`/api/v1/chaos/inject-detection-burst?count=${count}`, { method: 'POST' });
+        if (res.ok) {
+          const d = await res.json();
+          logAlert(`[🌊 CAOS] Ráfaga de ${d.burst_count} detecciones procesada sin lag en el WebSocket.`, 'text-cyan-300 font-bold');
+          speakTacticalAlert("Ráfaga de detecciones recibida y procesada.");
+          loadInitialDetections();
+        }
+      } catch (err) {
+        console.error('Error triggering burst:', err);
+      }
+    }
+
+    async function restoreSwarmFleet() {
+      try {
+        const res = await fetch('/api/v1/chaos/restore-fleet', { method: 'POST' });
+        if (res.ok) {
+          logAlert(`[🔄 RESTAURADO] Flota restaurada al 100% de batería y estado normal.`, 'text-emerald-400 font-bold');
+          speakTacticalAlert("Flota restaurada al cien por ciento.");
+        }
+      } catch (err) {
+        console.error('Error restoring fleet:', err);
+      }
+    }
+
+    // --- AIRSPACE VIEW TOGGLE (RADAR vs LEAFLET MAP vs FPV CAMERA) ---
+    let currentAirspaceView = 'radar';
+    let currentFpvDroneId = 'ARES-01';
+    let currentSensorMode = 'RGB';
+    let leafletMap = null;
+    let leafletDroneMarkers = {};
+    let leafletTargetMarkers = {};
+
+    function setAirspaceView(view) {
+      currentAirspaceView = view;
+      const rBtn = document.getElementById('btnViewRadar');
+      const mBtn = document.getElementById('btnViewMap');
+      const cBtn = document.getElementById('btnViewCamera');
+      const rContainer = document.getElementById('radarContainer');
+      const mContainer = document.getElementById('mapContainer');
+      const cContainer = document.getElementById('cameraContainer');
+
+      [rBtn, mBtn, cBtn].forEach(b => {
+        if (b) b.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg text-slate-400 hover:text-white transition';
+      });
+      [rContainer, mContainer, cContainer].forEach(c => {
+        if (c) c.classList.add('hidden');
+      });
+
+      if (view === 'radar') {
+        rBtn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white shadow-sm transition';
+        rContainer.classList.remove('hidden');
+      } else if (view === 'map') {
+        mBtn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white shadow-sm transition';
+        mContainer.classList.remove('hidden');
+        initLeafletMap();
+        setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 200);
+      } else if (view === 'camera') {
+        cBtn.className = 'px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-600 text-white shadow-sm transition';
+        cContainer.classList.remove('hidden');
+        updateFpvStreamSrc();
+      }
+    }
+
+    function selectFpvDrone(droneId) {
+      currentFpvDroneId = droneId;
+      ['ARES-01', 'ARES-02', 'ARES-03'].forEach(d => {
+        const btn = document.getElementById(`camDroneBtn-${d}`);
+        if (btn) {
+          if (d === droneId) {
+            btn.className = 'px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-cyan-600 text-white transition shadow-sm';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-slate-800 text-slate-300 hover:text-white transition';
+          }
+        }
+      });
+      updateFpvStreamSrc();
+      speakTacticalAlert(`Cámara FPV de ${droneId} sintonizada.`);
+    }
+
+    function openDroneCamera(droneId) {
+      selectFpvDrone(droneId);
+      setAirspaceView('camera');
+    }
+
+    function updateFpvStreamSrc() {
+      const img = document.getElementById('fpvStreamImg');
+      if (img) {
+        img.src = `/api/v1/camera/${currentFpvDroneId}/stream?t=${Date.now()}`;
+      }
+    }
+
+    async function setCameraSensorMode(mode) {
+      currentSensorMode = mode;
+      const rgbBtn = document.getElementById('btnModeRgb');
+      const thermBtn = document.getElementById('btnModeThermal');
+      if (mode === 'RGB') {
+        rgbBtn.className = 'px-2.5 py-1 rounded-lg font-bold text-[11px] bg-emerald-700 text-white transition shadow-sm';
+        thermBtn.className = 'px-2.5 py-1 rounded-lg font-bold text-[11px] bg-slate-800 text-slate-300 hover:text-white transition';
+      } else {
+        thermBtn.className = 'px-2.5 py-1 rounded-lg font-bold text-[11px] bg-amber-600 text-white transition shadow-sm';
+        rgbBtn.className = 'px-2.5 py-1 rounded-lg font-bold text-[11px] bg-slate-800 text-slate-300 hover:text-white transition';
+      }
+      try {
+        await fetch(`/api/v1/camera/${currentFpvDroneId}/mode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode })
+        });
+        updateFpvStreamSrc();
+        speakTacticalAlert(mode === 'RGB' ? 'Sensor óptico RGB seleccionado.' : 'Cámara térmica infrarroja FLIR activada.');
+      } catch (err) {
+        console.error('Error changing camera mode:', err);
+      }
+    }
+
+    let currentGimbalZoom = 1.0;
+    let cameraPollInterval = null;
+
+    async function captureFpvSnapshot() {
+      try {
+        const res = await fetch(`/api/v1/camera/${currentFpvDroneId}/snapshot`, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          logAlert(`[📸 FPV SNAPSHOT] Foto de ${currentFpvDroneId} (${(data.bytes_size/1024).toFixed(1)} KB) archivada`, 'text-indigo-300 font-bold');
+          speakTacticalAlert("Fotografía de evidencia archivada en el dossier oficial.");
+          loadSnapshotCount();
+          // Visual shutter flash effect on video element
+          const img = document.getElementById('fpvStreamImg');
+          if (img) {
+            img.style.opacity = '0.2';
+            setTimeout(() => { img.style.opacity = '1.0'; }, 100);
+          }
+        }
+      } catch (err) {
+        console.error('Error capturing snapshot:', err);
+      }
+    }
+
+    async function loadSnapshotCount() {
+      try {
+        const res = await fetch('/api/v1/camera/snapshots');
+        if (res.ok) {
+          const list = await res.json();
+          const count = list.length;
+          const badge = document.getElementById('snapCountBadge');
+          if (badge) badge.innerText = count;
+          const modalTotal = document.getElementById('modalSnapTotalCount');
+          if (modalTotal) modalTotal.innerText = count;
+        }
+      } catch (err) {
+        console.error('Error fetching snapshot count:', err);
+      }
+    }
+
+    async function openForensicModal() {
+      const modal = document.getElementById('forensicModal');
+      const content = document.getElementById('forensicModalContent');
+      if (!modal || !content) return;
+      modal.classList.remove('hidden');
+      content.innerHTML = '<div class="text-center py-12 text-slate-400 font-bold">Cargando catálogo de evidencias forenses...</div>';
+
+      try {
+        const res = await fetch('/api/v1/camera/snapshots');
+        const list = await res.json();
+        if (!list || list.length === 0) {
+          content.innerHTML = `
+            <div class="text-center py-12 text-slate-500">
+              <div class="text-3xl mb-2">📸</div>
+              <p class="font-bold text-sm">No hay fotografías archivadas todavía.</p>
+              <p class="text-xs text-slate-400 mt-1">Presione el botón [📸 Capturar] en la vista de cámara FPV para registrar una evidencia pericial.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">';
+        list.forEach(s => {
+          const kb = (s.size_bytes / 1024).toFixed(1);
+          html += `
+            <div class="bg-slate-950/80 border border-slate-700/80 rounded-2xl overflow-hidden shadow-lg flex flex-col hover:border-indigo-500/50 transition">
+              <div class="relative h-44 bg-black overflow-hidden group">
+                <img src="${s.url}" alt="${s.filename}" class="w-full h-full object-cover transition duration-300 group-hover:scale-105" />
+                <div class="absolute top-2 left-2 bg-black/80 backdrop-blur-sm border border-emerald-500/80 text-emerald-300 font-extrabold text-[10px] px-2 py-0.5 rounded-md">
+                  ${s.drone_id} FPV
+                </div>
+                <div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-sm text-slate-300 font-mono text-[10px] px-2 py-0.5 rounded-md">
+                  ${kb} KB
+                </div>
+              </div>
+              <div class="p-3 flex-1 flex flex-col justify-between">
+                <div>
+                  <div class="font-mono text-[11px] font-bold text-slate-200 truncate" title="${s.filename}">
+                    📁 ${s.filename}
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-1 flex justify-between">
+                    <span>🕒 ${s.created_at}</span>
+                    <span class="text-indigo-400 font-bold">D-FINE VERIFICADO</span>
+                  </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-slate-800 flex justify-between items-center">
+                  <a href="${s.url}" target="_blank" class="text-[11px] font-bold text-sky-400 hover:text-sky-300 transition">
+                    ↗️ Ver Alta Res
+                  </a>
+                  <a href="${s.url}" download="${s.filename}" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">
+                    ⬇️ Descargar
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = `<div class="text-center py-12 text-rose-400 font-bold">Error al cargar evidencias: ${err.message}</div>`;
+      }
+    }
+
+    function closeForensicModal() {
+      const modal = document.getElementById('forensicModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function onGimbalSliderChange() {
+      const pitch = parseFloat(document.getElementById('sliderPitch').value);
+      const yaw = parseFloat(document.getElementById('sliderYaw').value);
+      const pitchLabel = document.getElementById('valGimbalPitch');
+      const yawLabel = document.getElementById('valGimbalYaw');
+      if (pitchLabel) pitchLabel.innerText = `${pitch > 0 ? '+' : ''}${pitch.toFixed(0)}°`;
+      if (yawLabel) yawLabel.innerText = `${yaw > 0 ? '+' : ''}${yaw.toFixed(0)}°`;
+
+      try {
+        await fetch(`/api/v1/camera/${currentFpvDroneId}/gimbal`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pitch_deg: pitch,
+            yaw_deg: yaw,
+            zoom: currentGimbalZoom
+          })
+        });
+      } catch (err) {
+        console.error('Error updating gimbal:', err);
+      }
+    }
+
+    async function applyGimbalPreset(preset) {
+      try {
+        const res = await fetch(`/api/v1/camera/${currentFpvDroneId}/preset/${preset}`, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          const pSlider = document.getElementById('sliderPitch');
+          const ySlider = document.getElementById('sliderYaw');
+          const pVal = document.getElementById('valGimbalPitch');
+          const yVal = document.getElementById('valGimbalYaw');
+          const zVal = document.getElementById('valGimbalZoom');
+          if (pSlider) pSlider.value = data.pitch_deg;
+          if (ySlider) ySlider.value = data.yaw_deg;
+          if (pVal) pVal.innerText = `${data.pitch_deg > 0 ? '+' : ''}${data.pitch_deg.toFixed(0)}°`;
+          if (yVal) yVal.innerText = `${data.yaw_deg > 0 ? '+' : ''}${data.yaw_deg.toFixed(0)}°`;
+          if (zVal) zVal.innerText = `${data.zoom.toFixed(1)}x`;
+          currentGimbalZoom = data.zoom;
+          const zBtn = document.getElementById('btnZoomToggle');
+          if (zBtn) zBtn.innerText = `🔍 ${currentGimbalZoom.toFixed(1)}x`;
+          logAlert(`[🎯 GIMBAL] Preset '${preset.toUpperCase()}' aplicado a ${currentFpvDroneId}`, 'text-cyan-300 font-bold');
+        }
+      } catch (err) {
+        console.error('Error applying gimbal preset:', err);
+      }
+    }
+
+    async function toggleGimbalZoom() {
+      if (currentGimbalZoom < 1.9) currentGimbalZoom = 2.0;
+      else if (currentGimbalZoom < 3.9) currentGimbalZoom = 4.0;
+      else currentGimbalZoom = 1.0;
+
+      const zBtn = document.getElementById('btnZoomToggle');
+      if (zBtn) zBtn.innerText = `🔍 ${currentGimbalZoom.toFixed(1)}x`;
+      const zVal = document.getElementById('valGimbalZoom');
+      if (zVal) zVal.innerText = `${currentGimbalZoom.toFixed(1)}x`;
+
+      const pitch = parseFloat(document.getElementById('sliderPitch')?.value || -45);
+      const yaw = parseFloat(document.getElementById('sliderYaw')?.value || 0);
+
+      try {
+        await fetch(`/api/v1/camera/${currentFpvDroneId}/gimbal`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pitch_deg: pitch,
+            yaw_deg: yaw,
+            zoom: currentGimbalZoom
+          })
+        });
+      } catch (err) {
+        console.error('Error setting zoom:', err);
+      }
+    }
+
+    async function pollCameraDiagnostics() {
+      try {
+        const res = await fetch(`/api/v1/camera/${currentFpvDroneId}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // Update badge
+        const badge = document.getElementById('camSourceBadge');
+        const text = document.getElementById('camSourceText');
+        if (badge && text) {
+          if (data.is_external_active) {
+            badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/80 flex items-center space-x-1 shadow-sm';
+            text.innerText = `JETSON ORIN (${data.external_fps || 32} FPS)`;
+          } else {
+            badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-900 text-slate-300 border border-slate-700 flex items-center space-x-1';
+            text.innerText = 'GIMBAL PTZ SIM';
+          }
+        }
+
+        // Update labels
+        if (data.gimbal) {
+          const pVal = document.getElementById('valGimbalPitch');
+          const yVal = document.getElementById('valGimbalYaw');
+          const zVal = document.getElementById('valGimbalZoom');
+          if (pVal) pVal.innerText = `${data.gimbal.pitch_deg > 0 ? '+' : ''}${data.gimbal.pitch_deg.toFixed(0)}°`;
+          if (yVal) yVal.innerText = `${data.gimbal.yaw_deg > 0 ? '+' : ''}${data.gimbal.yaw_deg.toFixed(0)}°`;
+          if (zVal) zVal.innerText = `${data.gimbal.zoom.toFixed(1)}x`;
+        }
+      } catch (e) {
+        // silent
+      }
+    }
+
+    function initLeafletMap() {
+      if (leafletMap) return;
+      try {
+        leafletMap = L.map('leafletMap', {
+          center: [-12.046374, -77.042793],
+          zoom: 18,
+          zoomControl: true
+        });
+
+        L.tileLayer('/api/v1/tiles/{z}/{x}/{y}', {
+          maxZoom: 19,
+          minZoom: 13,
+          attribution: 'ARES MGRS Topo'
+        }).addTo(leafletMap);
+
+        // Add base marker
+        L.marker([-12.046374, -77.042793], {
+          icon: L.divIcon({
+            className: 'base-label',
+            html: '<div style="background:#0284c7;color:#fff;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:900;border:1px solid #38bdf8;box-shadow:0 0 12px rgba(2,132,199,0.5);">🏠 BASE TOC</div>'
+          })
+        }).addTo(leafletMap).bindPopup("<b>Centro de Operaciones Táctico (TOC)</b><br>Coordenadas: -12.046374, -77.042793");
+      } catch (err) {
+        console.error('Error initializing Leaflet map:', err);
+      }
+    }
+
+    function updateLeafletMap(drones) {
+      if (!leafletMap) return;
+      try {
+        // Update drones
+        drones.forEach(d => {
+          const latlng = [d.lat, d.lon];
+          const isDenied = d.gps_denied;
+          const pinColor = isDenied ? '#ef4444' : (d.in_safety_breach ? '#f97316' : '#06b6d4');
+          const yaw = d.orientation?.yaw || 0;
+          const htmlIcon = `
+            <div style="transform: rotate(${yaw}deg); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: ${pinColor}; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 10px ${pinColor}; color: white; font-weight: bold; font-size: 11px;">
+              ➤
+            </div>
+          `;
+
+          if (!leafletDroneMarkers[d.drone_id]) {
+            leafletDroneMarkers[d.drone_id] = L.marker(latlng, {
+              icon: L.divIcon({ className: 'drone-pin', html: htmlIcon, iconSize: [28, 28] })
+            }).addTo(leafletMap);
+          } else {
+            leafletDroneMarkers[d.drone_id].setLatLng(latlng);
+            leafletDroneMarkers[d.drone_id].setIcon(L.divIcon({ className: 'drone-pin', html: htmlIcon, iconSize: [28, 28] }));
+          }
+          leafletDroneMarkers[d.drone_id].bindTooltip(`<b>${d.drone_id}</b><br>Alt: ${d.alt}m<br>Bat: ${d.battery}%<br>PNR: ${d.pnr_status || 'OK'}`);
+        });
+
+        // Update targets
+        knownTargets.forEach(t => {
+          const lat = t.estimated_lat || t.lat;
+          const lon = t.estimated_lon || t.lon;
+          if (!lat || !lon) return;
+
+          if (!leafletTargetMarkers[t.target_id]) {
+            const isSurvivor = t.target_class === 'SURVIVOR';
+            const col = isSurvivor ? '#10b981' : '#f43f5e';
+            const pinHtml = `
+              <div style="background: ${col}; color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: bold; border: 1px solid #fff; box-shadow: 0 0 8px ${col};">
+                ${isSurvivor ? '👤 ' : '🔥 '}${t.target_class}
+              </div>
+            `;
+            leafletTargetMarkers[t.target_id] = L.marker([lat, lon], {
+              icon: L.divIcon({ className: 'target-pin', html: pinHtml })
+            }).addTo(leafletMap);
+            leafletTargetMarkers[t.target_id].bindPopup(`<b>${t.target_id}</b>: ${t.target_class}<br>Certeza: ${Math.round((t.confidence || 0.9) * 100)}%<br><img src="/api/v1/detections/${t.target_id}/snapshot" style="width:180px;border-radius:6px;margin-top:4px;" />`);
+          }
+        });
+      } catch (e) {
+        console.error("Map update error:", e);
+      }
+    }
+
+    // --- DEFENSE & EW QUICK ACTIONS ---
+    async function triggerChaosJamming(droneId = 'ARES-02') {
+      try {
+        const res = await fetch('/api/v1/defense/anti-jamming/simulate-attack', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ drone_id: droneId, attack_type: 'RF_JAMMING' })
+        });
+        if (res.ok) {
+          logAlert(`[🚨 GUERRA ELECTRÓNICA] Jamming RF inyectado en ${droneId}. Modo GPS-Denied activado!`, 'text-rose-400 font-bold');
+          speakTacticalAlert(`Alerta de guerra electrónica: Ataque de interferencia en ${droneId}. Conmutando a navegación inercial.`);
+        }
+      } catch (err) {
+        console.error('Error simulating jamming:', err);
+      }
+    }
+
+    async function triggerCotBroadcast() {
+      try {
+        const res = await fetch('/api/v1/defense/cot/broadcast-now', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          logAlert(`[📡 ATAK CoT] ${data.events_transmitted} eventos XML emitidos a la red militar en puerto ${data.target_port}`, 'text-sky-300 font-bold');
+          speakTacticalAlert("Eventos Cursor on Target emitidos a terminales ATAK en la red táctica.");
+        }
+      } catch (err) {
+        console.error('Error broadcasting CoT:', err);
+      }
+    }
+
+    let windToggleState = false;
+    async function triggerWindChange() {
+      windToggleState = !windToggleState;
+      const speed = windToggleState ? 10.8 : 3.5;
+      const dir = windToggleState ? 225.0 : 135.0;
+      try {
+        const res = await fetch('/api/v1/defense/aerodynamics/wind', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ speed_ms: speed, direction_deg: dir })
+        });
+        if (res.ok) {
+          logAlert(`[💨 METEOROLOGÍA] Viento simulado: ${speed} m/s @ ${dir}° (Test PNR)`, 'text-indigo-300 font-bold');
+          speakTacticalAlert(windToggleState ? "Alerta meteorológica: Viento fuerte de diez metros por segundo. Comprobando punto de no retorno." : "Viento normalizado a brisa moderada.");
+        }
+      } catch (err) {
+        console.error('Error setting wind:', err);
+      }
+    }
+
+    // --- QUICK SIMULATION HELPERS ---
+    async function triggerAiDetection(targetClass = 'SURVIVOR') {
+      try {
+        const res = await fetch(`/api/v1/detections/simulate-test?target_class=${targetClass}`, { method: 'POST' });
+        if (res.ok) {
+          const d = await res.json();
+          logAlert(`[🎯 SIMULACIÓN IA] ${d.target_class} inyectado en (${d.estimated_lat}, ${d.estimated_lon})`, 'text-emerald-400 font-bold');
+          loadInitialDetections();
+          loadGeofences();
+        }
+      } catch (err) {
+        console.error('Error simulating detection:', err);
+      }
+    }
+
+    async function simulateAIHeartbeatNow() {
+      try {
+        const res = await fetch('/api/v1/ai-engine/simulate-heartbeat', { method: 'POST' });
+        if (res.ok) {
+          const st = await res.json();
+          updateAIHeaderStatus(st);
+          logAlert(`[🤖 HEARTBEAT IA] Reporte recibido: ${st.fps} FPS, ${st.gpu_temp_c}°C`, 'text-cyan-300');
+        }
+      } catch (err) {
+        console.error('Error simulating AI heartbeat:', err);
+      }
+    }
+
+    async function simulateMAVLinkPacketNow() {
+      try {
+        const res = await fetch('/api/v1/telemetry/mavlink/simulate', { method: 'POST' });
+        if (res.ok) {
+          const d = await res.json();
+          logAlert(`[📡 MAVLINK UDP] Paquete MAV-01 recibido en puerto 14550`, 'text-blue-300 font-bold');
+          speakTacticalAlert("Telemetría de autopiloto MAVLink recibida en puerto UDP.");
+        }
+      } catch (err) {
+        console.error('Error simulating MAVLink packet:', err);
+      }
+    }
+
+    async function submitSearchGrid() {
+      const w = parseFloat(document.getElementById('gridWidth').value);
+      const h = parseFloat(document.getElementById('gridHeight').value);
+      const s = parseFloat(document.getElementById('gridSpacing').value);
+      const a = parseFloat(document.getElementById('gridAlt').value);
+
+      const payload = {
+        mission_name: "SAR Area Sweep Personalizado",
+        assigned_drone_ids: ["ARES-01", "ARES-02", "ARES-03"],
+        width_meters: w,
+        height_meters: h,
+        swath_spacing_m: s,
+        altitude_m: a
+      };
+
+      try {
+        const res = await fetch('/api/v1/missions/generate-search-grid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const m = await res.json();
+          activeMissionWaypoints = Object.values(m.drone_waypoints || {});
+          logAlert(`[🚀 BARRIDO ASIGNADO] ${m.mission_name}`, 'text-emerald-400 font-bold');
+          speakTacticalAlert("Misión de barrido generada y cargada en los drones.");
+          loadMissions();
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+
+    function exportFirstMissionQGC() {
+      window.open('/api/v1/missions/ARES-MISSION-01/export/qgc', '_blank');
+    }
+
+    async function assignDroneToTarget(targetId, droneId) {
+      try {
+        const res = await fetch(`/api/v1/detections/${targetId}/assign?drone_id=${droneId}`, { method: 'POST' });
+        if (res.ok) {
+          logAlert(`[⚡ DESPACHO] ${droneId} asignado a ${targetId}`, 'text-cyan-300 font-bold');
+          speakTacticalAlert(`Dron ${droneId} asignado a objetivo.`);
+          loadInitialDetections();
+        }
+      } catch (err) {
+        console.error('Error assigning target:', err);
+      }
+    }
+
+    async function broadcastCommand(cmd) {
+      logAlert(`[COMMAND] Transmitiendo ${cmd} a toda la flota`, 'text-cyan-400 font-bold');
+      speakTacticalAlert(`Comando ${cmd} transmitido.`);
+    }
+
+    // --- AAR MODAL ACTIONS ---
+    async function openAARModal() {
+      const modal = document.getElementById('aarModal');
+      const content = document.getElementById('aarModalContent');
+      modal.classList.remove('hidden');
+      content.innerHTML = '<div class="text-center py-12 text-slate-400 font-bold">Generando informe After-Action Review...</div>';
+
+      try {
+        const res = await fetch('/api/v1/missions/ARES-MISSION-01/aar-report');
+        if (res.ok) {
+          const data = await res.json();
+          renderAARModalContent(data);
+        } else {
+          content.innerHTML = '<div class="text-red-400 text-center py-8">Error cargando el informe AAR.</div>';
+        }
+      } catch (err) {
+        content.innerHTML = `<div class="text-red-400 text-center py-8">Error: ${err.message}</div>`;
+      }
+    }
+
+    function closeAARModal() {
+      document.getElementById('aarModal').classList.add('hidden');
+    }
+
+    function renderAARModalContent(data) {
+      const k = data.kpis;
+      const sb = data.score_breakdown;
+
+      document.getElementById('aarModalContent').innerHTML = `
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center shadow-lg">
+          <div>
+            <span class="text-[11px] text-slate-400 uppercase font-bold">Calificación Oficial de Desempeño:</span>
+            <h4 class="text-2xl font-black mt-0.5" style="color: ${data.grade_color};">${data.performance_grade}</h4>
+            <p class="text-slate-400 text-[11px] mt-1">Cero colisiones • Evasión en &lt;0.1 ms • Autorreparación de enjambre</p>
+          </div>
+          <div class="w-20 h-20 rounded-full border-4 flex flex-col items-center justify-center font-black text-2xl" style="border-color: ${data.grade_color}; color: ${data.grade_color};">
+            <span>${data.overall_score}</span>
+            <span class="text-[9px] text-slate-400 font-normal">/ 100 PTS</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <div class="text-[10px] text-slate-400 font-bold">Detección IA</div>
+            <div class="text-base font-black text-white mt-0.5">${sb.target_detection_points}/${sb.target_detection_max}</div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <div class="text-[10px] text-slate-400 font-bold">Seguridad Vuelo</div>
+            <div class="text-base font-black text-white mt-0.5">${sb.flight_safety_points}/${sb.flight_safety_max}</div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <div class="text-[10px] text-slate-400 font-bold">Cobertura Área</div>
+            <div class="text-base font-black text-white mt-0.5">${sb.area_coverage_points}/${sb.area_coverage_max}</div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <div class="text-[10px] text-slate-400 font-bold">Eficiencia Batería</div>
+            <div class="text-base font-black text-white mt-0.5">${sb.energy_efficiency_points}/${sb.energy_efficiency_max}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 font-bold">Tiempo 1ª Detección:</span>
+            <div class="text-sm font-black text-cyan-400 mt-0.5">${k.time_to_first_detection_sec}s</div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 font-bold">Cobertura Explorada:</span>
+            <div class="text-sm font-black text-emerald-400 mt-0.5">${k.area_coverage_pct}% (${k.area_covered_m2} m²)</div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-slate-400 font-bold">Supervivientes Hallados:</span>
+            <div class="text-sm font-black text-emerald-400 mt-0.5">${k.survivors_located} personas</div>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+          <div class="font-bold text-slate-300 mb-2">🎯 Objetivos y Evidencias Registradas (${data.targets_list.length}):</div>
+          <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+            ${data.targets_list.map(t => `
+              <div class="p-2 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center text-[11px]">
+                <span class="font-bold text-white">${t.target_class}</span>
+                <span class="text-cyan-400 font-mono-val">${t.lat.toFixed(5)}, ${t.lon.toFixed(5)}</span>
+                <span class="text-emerald-400 font-bold">${t.confidence_pct}%</span>
+              </div>
+            `).join('') || '<div class="text-slate-500 py-2">Sin objetivos registrados aún.</div>'}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- BLACK BOX RECORDER CONTROLS ---
+    async function toggleBlackBoxRecord() {
+      if (!isRecording) {
+        try {
+          const res = await fetch('/api/v1/recorder/start?session_name=operacion_campo', { method: 'POST' });
+          if (res.ok) {
+            isRecording = true;
+            recordStartTime = Date.now();
+            recDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping';
+            recText.textContent = 'GRABANDO';
+            recTimer.classList.remove('hidden');
+            recordTimerInterval = setInterval(() => {
+              const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
+              const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+              const s = String(elapsed % 60).padStart(2, '0');
+              recTimer.textContent = `${m}:${s}`;
+            }, 1000);
+            logAlert(`[📼 CAJA NEGRA] Grabación iniciada.`, 'text-rose-400 font-bold');
+            speakTacticalAlert("Grabación de caja negra iniciada.");
+          }
+        } catch (err) {
+          console.error('Error starting recording:', err);
+        }
+      } else {
+        try {
+          const res = await fetch('/api/v1/recorder/stop', { method: 'POST' });
+          if (res.ok) {
+            isRecording = false;
+            clearInterval(recordTimerInterval);
+            recDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+            recText.textContent = 'REC CAJA NEGRA';
+            recTimer.classList.add('hidden');
+            logAlert(`[📼 CAJA NEGRA] Grabación guardada en disco (.jsonl).`, 'text-emerald-400 font-bold');
+            speakTacticalAlert("Grabación de caja negra guardada.");
+            loadRecordings();
+          }
+        } catch (err) {
+          console.error('Error stopping recording:', err);
+        }
+      }
+    }
+
+    async function startReplaySession(sessionId) {
+      try {
+        const res = await fetch(`/api/v1/recorder/replay/start?session_id=${sessionId}&speed=${replaySpeed}`, { method: 'POST' });
+        if (res.ok) {
+          logAlert(`[📼 REPLAY] Reproduciendo sesión ${sessionId} a ${replaySpeed}x`, 'text-amber-300 font-bold');
+          speakTacticalAlert(`Reproducción iniciada a ${replaySpeed} por.`);
+        }
+      } catch (err) {
+        console.error('Error starting replay:', err);
+      }
+    }
+
+    async function stopReplay() {
+      try {
+        await fetch('/api/v1/recorder/replay/stop', { method: 'POST' });
+        stopReplayUI();
+      } catch (err) {
+        console.error('Error stopping replay:', err);
+      }
+    }
+
+    function stopReplayUI() {
+      replayBanner.classList.add('hidden');
+      modeBadge.textContent = 'EN VUELO';
+      modeBadge.className = 'px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600';
+    }
+
+    function setReplaySpeed(s) {
+      replaySpeed = s;
+      document.querySelectorAll('.speed-btn').forEach(b => {
+        b.classList.remove('active', 'bg-cyan-600', 'text-white');
+        b.classList.add('bg-slate-800', 'text-slate-300');
+        if (b.textContent === `${s}x`) {
+          b.classList.add('active', 'bg-cyan-600', 'text-white');
+          b.classList.remove('bg-slate-800', 'text-slate-300');
+        }
+      });
+      replaySpeedBadge.textContent = `${s}x`;
+    }
+
+    function logAlert(msg, colorClass = 'text-slate-300') {
+      const el = document.createElement('div');
+      el.className = colorClass;
+      const now = new Date().toLocaleTimeString();
+      el.textContent = `[${now}] ${msg}`;
+      alertsLog.insertBefore(el, alertsLog.firstChild);
+      if (alertsLog.children.length > 50) {
+        alertsLog.removeChild(alertsLog.lastChild);
+      }
+    }
+
+    function clearAlerts() {
+      alertsLog.innerHTML = '';
+    }
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      connectWS();
+      loadInitialDetections();
+      loadGeofences();
+      loadAIDiagnostics();
+      loadSnapshotCount();
+      pollCameraDiagnostics();
+
+      setInterval(loadAIDiagnostics, 3000);
+      setInterval(loadSnapshotCount, 5000);
+      setInterval(pollCameraDiagnostics, 2000);
+    });
+  </script>
+</body>
+</html>
