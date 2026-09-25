@@ -47,6 +47,16 @@ html.light .text-slate-500 {
   color: #475569 !important;
 }
 
+/* Tactical NVG (Night Vision Goggles) Phosphor Green Mode */
+html.nvg {
+  filter: hue-rotate(80deg) saturate(1.4) contrast(1.15) brightness(1.05);
+}
+
+/* Tactical Amber CRT Radar Mode */
+html.amber {
+  filter: sepia(0.85) saturate(2.4) hue-rotate(345deg);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

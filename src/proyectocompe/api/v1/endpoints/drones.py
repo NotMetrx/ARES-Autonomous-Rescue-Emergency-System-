@@ -115,3 +115,22 @@ async def drone_goto_target(drone_id: str, goto_req: DroneGotoRequest):
         "message": f"{drone_id} navegando hacia Lat: {goto_req.lat:.6f}, Lon: {goto_req.lon:.6f}"
     }
 
+class SwarmFormationRequest(BaseModel):
+    formation: str = "DELTA"
+    spacing_m: Optional[float] = 25.0
+
+@router.post("/formation")
+async def dispatch_swarm_formation(req: SwarmFormationRequest):
+    """
+    Commands the active swarm into a coordinated formation (DELTA, LINE, ECHELON, ORBIT).
+    Calculates dynamic waypoints for each drone relative to the leader.
+    """
+    res = swarm_simulator.set_swarm_formation(req.formation, req.spacing_m or 25.0)
+    return {
+        "status": "FORMATION_ACTIVE",
+        "formation": res["formation"],
+        "assignments": res["assignments"],
+        "message": f"Flota maniobrando a formación {res['formation']} con espaciamiento de {req.spacing_m or 25.0}m"
+    }
+
+

@@ -154,6 +154,59 @@ class SwarmSimulator:
             return True
         return False
 
+    def set_swarm_formation(self, formation_type: str = "DELTA", spacing_m: float = 25.0) -> dict:
+        """
+        Commands the swarm into a coordinated tactical formation:
+        - DELTA: V-formation with ARES-01 leader, ARES-02 left wing, ARES-03 right wing
+        - LINE: Line abeam formation for parallel sweeping
+        - ECHELON: Column/trail line
+        - ORBIT: 360-degree perimeter ring
+        """
+        center_lat = self.base_lat
+        center_lon = self.base_lon
+
+        leader = self.agents.get("ARES-01")
+        if leader:
+            center_lat = leader["lat"]
+            center_lon = leader["lon"]
+
+        meters_per_lon = METERS_PER_LAT_DEG * math.cos(math.radians(self.base_lat))
+
+        offsets = {
+            "DELTA": {
+                "ARES-01": (0.0, spacing_m * 0.5),
+                "ARES-02": (-spacing_m, -spacing_m * 0.5),
+                "ARES-03": (spacing_m, -spacing_m * 0.5),
+            },
+            "LINE": {
+                "ARES-01": (0.0, 0.0),
+                "ARES-02": (-spacing_m * 1.2, 0.0),
+                "ARES-03": (spacing_m * 1.2, 0.0),
+            },
+            "ECHELON": {
+                "ARES-01": (0.0, spacing_m),
+                "ARES-02": (-spacing_m * 0.8, 0.0),
+                "ARES-03": (-spacing_m * 1.6, -spacing_m),
+            },
+            "ORBIT": {
+                "ARES-01": (0.0, spacing_m * 1.2),
+                "ARES-02": (-spacing_m * 1.05, -spacing_m * 0.6),
+                "ARES-03": (spacing_m * 1.05, -spacing_m * 0.6),
+            }
+        }
+
+        form_key = formation_type.upper()
+        selected_offsets = offsets.get(form_key, offsets["DELTA"])
+        results = {}
+        for d_id, (dx, dy) in selected_offsets.items():
+            if d_id in self.agents:
+                tgt_lat = center_lat + (dy / METERS_PER_LAT_DEG)
+                tgt_lon = center_lon + (dx / meters_per_lon)
+                self.set_drone_target(d_id, tgt_lat, tgt_lon, alt=32.0, speed=7.5)
+                results[d_id] = {"lat": tgt_lat, "lon": tgt_lon}
+
+        return {"formation": form_key, "assignments": results}
+
     def update_physics(self):
         """Updates kinematics, checks 15m safety bubble, checks geofences, and logs flight data."""
         now = time.time()

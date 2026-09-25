@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { useSwarmStore } from '../store/useSwarmStore';
 import { DroneTelemetry, TargetDetection } from '../types/telemetry';
 import { tacticalVoice } from '../services/tacticalVoice';
+import { tacticalAudio } from '../services/tacticalAudio';
 import { 
   Compass, 
   Layers, 
@@ -59,6 +60,9 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   const setSelectedDroneId = useSwarmStore(s => s.setSelectedDroneId);
   const ptzRef = useRef(useSwarmStore.getState().ptz);
 
+  const cameraMode = useSwarmStore(s => s.cameraMode);
+  const setCameraMode = useSwarmStore(s => s.setCameraMode);
+
   // UI state overlays
   const [camMode, setCamMode] = useState<CameraPerspective>('orbit');
   const [showBubbles, setShowBubbles] = useState<boolean>(true);
@@ -66,6 +70,8 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
   const [showDetections, setShowDetections] = useState<boolean>(true);
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [pipOpen, setPipOpen] = useState<boolean>(true);
+  const [pipMinimized, setPipMinimized] = useState<boolean>(false);
   const [activeDestination, setActiveDestination] = useState<{ x: number; z: number; lat: number; lon: number } | null>(null);
   const [hoveredCoords, setHoveredCoords] = useState<{ x: number; z: number; lat: number; lon: number; dist: number } | null>(null);
 
@@ -799,6 +805,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
           const hitDroneId = intersects[0].object.userData.droneId;
           if (hitDroneId) {
             setSelectedDroneId(hitDroneId);
+            tacticalAudio.playLockOn();
             tacticalVoice.speak(`Dron táctico ${hitDroneId} seleccionado`, 'select', true);
             return;
           }
@@ -880,6 +887,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
         const pt = groundHits[0].point;
         const [lat, lon] = cartesianToGeo(pt.x, pt.z);
         setActiveDestination({ x: pt.x, z: pt.z, lat, lon });
+        tacticalAudio.playLockOn();
 
         if (onTargetDesignatedRef.current) {
           onTargetDesignatedRef.current(lat, lon);
@@ -1286,6 +1294,95 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
           <span>MODO DESIGNACIÓN 3D ACTIVO: HAZ CLICK EN EL TERRENO PARA ASIGNAR WAYPOINT A {selectedDroneId}</span>
         </div>
       )}
+
+      {/* Bottom Right: Picture-in-Picture (PiP) Live FPV Cam */}
+      <div className="absolute bottom-3 right-3 pointer-events-auto z-20">
+        {pipOpen ? (
+          <div className={`bg-slate-950/95 backdrop-blur-md rounded-2xl border border-cyan-500/40 shadow-2xl overflow-hidden transition-all duration-300 ${pipMinimized ? 'w-48' : 'w-72 sm:w-80'}`}>
+            {/* PiP Header */}
+            <div className="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="font-mono font-bold text-cyan-300">FPV {selectedDroneId}</span>
+                <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-800 text-amber-300">{cameraMode}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={async () => {
+                    const next = cameraMode === 'RGB' ? 'THERMAL_FLIR' : 'RGB';
+                    setCameraMode(next);
+                    fetch(`/api/v1/camera/${selectedDroneId}/mode?mode=${next}`, { method: 'POST' }).catch(console.warn);
+                    tacticalAudio.playButtonBeep();
+                  }}
+                  className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold"
+                  title="Conmutar RGB / FLIR Térmico"
+                >
+                  {cameraMode === 'RGB' ? 'FLIR' : 'RGB'}
+                </button>
+                <button
+                  onClick={async () => {
+                    tacticalAudio.playCameraShutter();
+                    fetch(`/api/v1/camera/${selectedDroneId}/snapshot`, { method: 'POST' }).catch(console.warn);
+                  }}
+                  className="p-1 hover:bg-slate-800 text-rose-400 rounded text-xs"
+                  title="Capturar Snapshot"
+                >
+                  📸
+                </button>
+                <button
+                  onClick={() => setPipMinimized(!pipMinimized)}
+                  className="px-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-xs font-bold"
+                  title={pipMinimized ? 'Maximizar' : 'Minimizar'}
+                >
+                  {pipMinimized ? '▢' : '—'}
+                </button>
+                <button
+                  onClick={() => setPipOpen(false)}
+                  className="px-1 hover:bg-rose-950 text-slate-400 hover:text-rose-400 rounded text-xs"
+                  title="Cerrar PiP"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* PiP Video Body */}
+            {!pipMinimized && (
+              <div className="relative w-full h-44 bg-black flex items-center justify-center overflow-hidden">
+                <img
+                  src={`/api/v1/camera/${selectedDroneId}/stream`}
+                  alt={`PiP FPV ${selectedDroneId}`}
+                  className="w-full h-full object-cover"
+                  style={{
+                    filter: cameraMode === 'THERMAL_FLIR' ? 'contrast(1.4) saturate(2.4) hue-rotate(185deg)' : 'none'
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="100%" height="100%" fill="%23050811"/><text x="50%" y="50%" fill="%2306b6d4" font-family="monospace" font-size="12" text-anchor="middle">TRANSMISIÓN FPV VIVO</text></svg>';
+                  }}
+                />
+                {/* Mini Crosshair */}
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                  <div className="w-8 h-8 border border-cyan-400/50 rounded-full flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+                  </div>
+                </div>
+                {/* Live Tag */}
+                <div className="absolute bottom-1.5 left-2 bg-slate-950/80 px-2 py-0.5 rounded text-[9px] font-mono text-emerald-400 font-bold">
+                  ● 20 FPS MJPEG
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => setPipOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold shadow-xl transition"
+          >
+            <span>📷</span>
+            <span>VER FPV {selectedDroneId}</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 };

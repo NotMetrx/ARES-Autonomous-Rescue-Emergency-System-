@@ -217,14 +217,19 @@ export const Header: React.FC = () => {
           <span>{recordingBlackBox ? `REC ${formatSec(recordingDurationSec)}` : 'REC CAJA NEGRA'}</span>
         </button>
 
-        {/* Theme Toggle (Night Ops / Sunlight Field) */}
+        {/* Theme Toggle (Cyber Dark / NVG / Amber CRT / Sunlight Field) */}
         <button
           onClick={toggleTheme}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition text-xs font-bold"
-          title="Alternar Modo Noche OLED / Modo Luz Campo"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition text-xs font-bold shadow-sm"
+          title="Alternar Modo Visual: Cyber Dark / NVG Verde Fósforo / Ámbar CRT / Luz Día"
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />}
-          <span className="hidden sm:inline">{theme === 'dark' ? 'MODO LUZ' : 'MODO NOCHE'}</span>
+          {theme === 'dark' && <Moon className="w-4 h-4 text-cyan-400" />}
+          {theme === 'nvg' && <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />}
+          {theme === 'amber' && <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />}
+          {theme === 'light' && <Sun className="w-4 h-4 text-amber-400" />}
+          <span className="hidden sm:inline font-mono">
+            {theme === 'dark' ? 'CYBER DARK' : theme === 'nvg' ? 'NVG VERDE' : theme === 'amber' ? 'ÁMBAR CRT' : 'MODO DÍA'}
+          </span>
         </button>
       </div>
     </header>

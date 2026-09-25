@@ -21,7 +21,7 @@ interface SwarmStoreState {
   frameSeq: number;
   viewMode: '2d' | '3d' | 'map' | 'camera' | 'split';
   activeTab: 'fleet' | 'missions' | 'detections' | 'defense' | 'blackbox';
-  theme: 'dark' | 'light';
+  theme: 'dark' | 'light' | 'nvg' | 'amber';
   voiceEnabled: boolean;
   recordingBlackBox: boolean;
   recordingDurationSec: number;
@@ -132,12 +132,18 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
 
   toggleTheme: () => {
     const current = get().theme;
-    const next = current === 'dark' ? 'light' : 'dark';
+    const themes: ('dark' | 'nvg' | 'amber' | 'light')[] = ['dark', 'nvg', 'amber', 'light'];
+    const nextIdx = (themes.indexOf(current) + 1) % themes.length;
+    const next = themes[nextIdx];
+
+    document.documentElement.classList.remove('dark', 'light', 'nvg', 'amber');
     if (next === 'light') {
-      document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
+    } else if (next === 'nvg') {
+      document.documentElement.classList.add('dark', 'nvg');
+    } else if (next === 'amber') {
+      document.documentElement.classList.add('dark', 'amber');
     } else {
-      document.documentElement.classList.remove('light');
       document.documentElement.classList.add('dark');
     }
     set({ theme: next });

@@ -1,10 +1,13 @@
+import { tacticalAudio } from './tacticalAudio';
+
 class TacticalVoiceService {
   private enabled: boolean = true;
   private lastSpokenTime: Record<string, number> = {};
-  private cooldownMs: number = 4000; // avoid repeating the exact same alert within 4s
+  private cooldownMs: number = 3500; // avoid repeating the exact same alert within 3.5s
 
   public setEnabled(val: boolean) {
     this.enabled = val;
+    tacticalAudio.setEnabled(val);
     if (!val && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -22,6 +25,13 @@ class TacticalVoiceService {
       return;
     }
     this.lastSpokenTime[category] = now;
+
+    // Play procedural military radio chirp or collision alarm
+    if (category === 'collision') {
+      tacticalAudio.playCollisionAlarm();
+    } else {
+      tacticalAudio.playRadioChirp();
+    }
 
     try {
       window.speechSynthesis.cancel();
