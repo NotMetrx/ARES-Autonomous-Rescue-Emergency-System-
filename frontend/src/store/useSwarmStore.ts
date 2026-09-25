@@ -82,7 +82,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
   },
   aiStatus: {
     node_id: 'JETSON-ORIN-01',
-    model_name: 'D-FINE / YOLOv11s',
+    model_name: 'D-FINE-L (RT-DETR)',
     status: 'ONLINE',
     fps: 30.0,
     gpu_temp_c: 48.2,

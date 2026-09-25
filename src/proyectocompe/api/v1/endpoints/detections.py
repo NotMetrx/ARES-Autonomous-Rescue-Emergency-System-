@@ -25,7 +25,7 @@ router = APIRouter()
 @router.post("", response_model=TargetDetection)
 async def ingest_ai_detection(payload: TargetDetectionCreate):
     """
-    Primary Ingestion Endpoint for Edge AI / YOLO Detection Engine.
+    Primary Ingestion Endpoint for Edge AI / D-FINE (RT-DETR) Detection Engine.
     1. Computes ground WGS84 coordinates via ray casting and gimbal angles.
     2. Clusters and deduplicates with existing nearby targets (prevents alert flooding).
     3. Persists target and stores image snapshot on disk.

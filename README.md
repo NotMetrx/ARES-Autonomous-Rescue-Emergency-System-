@@ -50,7 +50,7 @@ Backend táctico de alto rendimiento para control geoespacial, visualización 3D
     - Watchdog de enlace: si un dron externo no envía telemetría por > 3.5s, conmuta a estado `EMERGENCY` y emite alerta de pérdida de enlace.
 
 12. **Watchdog de Salud y Métricas del Motor de IA Edge**:
-    - Endpoint `/api/v1/ai-engine/heartbeat` y `/api/v1/ai-engine/status`: monitorea en tiempo real los FPS del modelo YOLO, temperatura de GPU/CPU y uso de VRAM de la Jetson/Raspberry Pi.
+    - Endpoint `/api/v1/ai-engine/heartbeat` y `/api/v1/ai-engine/status`: monitorea en tiempo real los FPS del modelo D-FINE (RT-DETR), temperatura de GPU/CPU y uso de VRAM de la Jetson/Raspberry Pi.
 
 13. **Matriz de Cobertura Geoespacial y Huella de Visión en Vivo**:
     - Endpoint `/api/v1/missions/coverage`: discretiza el terreno en celdas y calcula el porcentaje de área barrida por los conos de visión de los drones.

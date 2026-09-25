@@ -78,7 +78,7 @@ export const KpiRibbon: React.FC = () => {
             <span className="text-sm font-black text-amber-400">{hazardsCount}</span>
             <span className="text-xs text-slate-400 font-medium">fuego</span>
           </div>
-          <span className="text-[10px] text-cyan-400 font-medium">YOLOv11s & D-FINE</span>
+          <span className="text-[10px] text-cyan-400 font-medium">D-FINE (RT-DETR) Edge AI</span>
         </div>
         <Target className="w-6 h-6 text-indigo-500/40" />
       </div>

@@ -13,7 +13,7 @@ async def run_extension_tests():
     print("=" * 60)
     hb_payload = AIHeartbeatPayload(
         node_id="JETSON-ORIN-01",
-        model_name="YOLOv11s-SAR",
+        model_name="D-FINE-L (RT-DETR)",
         status="ONLINE",
         fps=29.2,
         gpu_temp_c=47.1,

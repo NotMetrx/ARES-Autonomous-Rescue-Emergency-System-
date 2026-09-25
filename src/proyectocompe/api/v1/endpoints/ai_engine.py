@@ -34,7 +34,7 @@ async def simulate_heartbeat():
     vram = round(random.uniform(2100.0, 2350.0), 1)
     payload = AIHeartbeatPayload(
         node_id="JETSON-ORIN-01",
-        model_name="YOLOv11s-SAR",
+        model_name="D-FINE-L (RT-DETR)",
         status="ONLINE",
         fps=fps,
         gpu_temp_c=temp,

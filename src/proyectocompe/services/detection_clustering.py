@@ -8,7 +8,7 @@ from proyectocompe.services.detection_db import detection_db
 class DetectionClusteringService:
     """
     Spatio-Temporal Clustering & Deduplication Engine for Edge AI Detections.
-    Prevents alert flooding (e.g. 20 FPS YOLO detections over the same survivor)
+    Prevents alert flooding (e.g. 20 FPS D-FINE detections over the same survivor)
     by clustering detections within a spatial radius (e.g. 8m) and time window.
     """
 
