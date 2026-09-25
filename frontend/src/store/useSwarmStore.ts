@@ -36,8 +36,20 @@ interface SwarmStoreState {
   detections: TargetDetection[];
   isDrawingMode: boolean;
   drawnPoints: [number, number][];
+  copilotOpen: boolean;
+  groundUnits: Array<{
+    id: string;
+    name: string;
+    type: 'SAR' | 'MEDIC';
+    lat: number;
+    lon: number;
+    status: 'STANDBY' | 'DISPATCHED' | 'ON_SCENE';
+    targetSurvivorId?: string;
+  }>;
 
   // Actions
+  toggleCopilot: () => void;
+  dispatchGroundUnit: (unitId: string, targetSurvivorId: string) => void;
   handleTelemetryFrame: (frame: TelemetryFrame) => void;
   setWsConnected: (connected: boolean) => void;
   setSelectedDroneId: (droneId: string) => void;
@@ -105,6 +117,33 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
   detections: [],
   isDrawingMode: false,
   drawnPoints: [],
+  copilotOpen: false,
+  groundUnits: [
+    {
+      id: 'RESCATE-ALFA',
+      name: 'Equipo SAR Terrestre Alfa',
+      type: 'SAR',
+      lat: -12.04655,
+      lon: -77.04265,
+      status: 'STANDBY',
+    },
+    {
+      id: 'MEDICO-01',
+      name: 'Unidad Paramédica Delta',
+      type: 'MEDIC',
+      lat: -12.04645,
+      lon: -77.04295,
+      status: 'STANDBY',
+    },
+  ],
+
+  toggleCopilot: () => set((state) => ({ copilotOpen: !state.copilotOpen })),
+  dispatchGroundUnit: (unitId, targetSurvivorId) =>
+    set((state) => ({
+      groundUnits: state.groundUnits.map((u) =>
+        u.id === unitId ? { ...u, status: 'DISPATCHED', targetSurvivorId } : u
+      ),
+    })),
 
   handleTelemetryFrame: (frame: TelemetryFrame) => {
     const prevAlerts = get().alerts;

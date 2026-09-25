@@ -13,6 +13,7 @@ import { MissionsPanel } from './components/MissionsPanel';
 import { DefensePanel } from './components/DefensePanel';
 import { DetectionsFeed } from './components/DetectionsFeed';
 import { BlackBoxBar } from './components/BlackBoxBar';
+import { TacticalAICopilot } from './components/TacticalAICopilot';
 import { Compass, Shield, Target, Film, Terminal, Radio } from 'lucide-react';
 import { tacticalVoice } from './services/tacticalVoice';
 
@@ -244,11 +245,14 @@ export const App: React.FC = () => {
         </div>
       </div>
 
+      {/* Tactical AI Copilot Floating Drawer */}
+      <TacticalAICopilot />
+
       {/* Footer Tactical HUD Bar */}
       <footer className="bg-[#0b1220] border border-cyan-500/25 rounded-xl px-4 py-2.5 text-[11px] text-slate-400 flex flex-wrap justify-between items-center gap-2 shadow-lg">
         <div className="flex items-center space-x-4">
           <span className="flex items-center text-cyan-400 font-extrabold tracking-wide">
-            <Radio className="w-3.5 h-3.5 mr-1.5 animate-pulse text-cyan-400" /> ARES TACTICAL OS v3.0
+            <Radio className="w-3.5 h-3.5 mr-1.5 animate-pulse text-cyan-400" /> BIOSCAOUT TACTICAL OS v3.0
           </span>
           <span>Base: Lima, Perú (WGS84)</span>
           <span className="text-slate-600">|</span>

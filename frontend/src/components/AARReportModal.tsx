@@ -23,7 +23,7 @@ interface AARReportModalProps {
 
 export const AARReportModal: React.FC<AARReportModalProps> = ({ isOpen, onClose }) => {
   const { drones, detections, coveragePct, coveredAreaM2, aiStatus, wind, antiJamming } = useSwarmStore();
-  const [missionId] = useState(`ARES-SAR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-01`);
+  const [missionId] = useState(`BIOSCAOUT-SAR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-01`);
 
   if (!isOpen) return null;
 
@@ -257,7 +257,7 @@ export const AARReportModal: React.FC<AARReportModalProps> = ({ isOpen, onClose 
           <div className="border-t border-slate-800 pt-6 mt-6 grid grid-cols-2 gap-8 text-xs font-mono text-slate-400">
             <div>
               <div className="border-b border-slate-700 pb-1 mb-1 font-bold text-slate-300">
-                AUTORIDAD DE COMANDO C2 (ARES)
+                AUTORIDAD DE COMANDO C2 (BIOSCAOUT)
               </div>
               <div>OPERADOR DE MISIÓN / AUTÓNOMO V3.0</div>
               <div className="text-[10px] text-slate-500 mt-1">FIRMA DIGITAL: SHA256-CERTIFIED-AUTOPILOT</div>

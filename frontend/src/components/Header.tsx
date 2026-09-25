@@ -14,9 +14,11 @@ import {
   Wind,
   ShieldCheck,
   Cpu,
-  Radio
+  Radio,
+  Bot
 } from 'lucide-react';
 import { tacticalVoice } from '../services/tacticalVoice';
+import { tacticalAudio } from '../services/tacticalAudio';
 
 export const Header: React.FC = () => {
   const { 
@@ -34,7 +36,9 @@ export const Header: React.FC = () => {
     incrementRecTimer,
     aiStatus,
     wind,
-    antiJamming
+    antiJamming,
+    copilotOpen,
+    toggleCopilot
   } = useSwarmStore();
 
   useEffect(() => {
@@ -79,7 +83,7 @@ export const Header: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2">
             <h1 className="text-base font-black tracking-tight bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">
-              ARES TACTICAL C2
+              BIOSCAOUT TACTICAL C2
             </h1>
             <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-700/60 shadow-sm">
               SWARM v3.0
@@ -188,6 +192,23 @@ export const Header: React.FC = () => {
             <span>Split</span>
           </button>
         </div>
+
+        {/* Tactical AI Copilot Toggle */}
+        <button
+          onClick={() => {
+            tacticalAudio.playButtonBeep();
+            toggleCopilot();
+          }}
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-black transition shadow-lg ${
+            copilotOpen
+              ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 border-cyan-400 text-white shadow-cyan-500/25 ring-2 ring-cyan-400/50'
+              : 'bg-slate-900/90 border-cyan-500/40 text-cyan-300 hover:bg-slate-800'
+          }`}
+          title="Abrir Copiloto Táctico IA con reconocimiento de voz y lenguaje natural"
+        >
+          <Bot className="w-4 h-4 text-cyan-300" />
+          <span className="hidden sm:inline font-mono">COPILOTO IA</span>
+        </button>
 
         {/* Tactical Voice Toggle */}
         <button
