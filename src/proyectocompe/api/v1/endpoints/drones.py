@@ -19,6 +19,33 @@ async def get_drone_status(drone_id: str):
         raise HTTPException(status_code=404, detail=f"Drone {drone_id} not found in active fleet")
     return drone
 
+@router.post("/command")
+async def send_fleet_command(cmd_req: DroneCommandRequest):
+    """
+    Broadcast tactical command to all active drones in the swarm:
+    - TAKEOFF
+    - LAND
+    - RTH
+    - EMERGENCY_STOP
+    """
+    results = []
+    for d in fsm_service.get_all_drones():
+        success, msg = fsm_service.handle_command(d.drone_id, cmd_req.command)
+        if success:
+            drone_updated = fsm_service.get_drone(d.drone_id)
+            if drone_updated:
+                swarm_simulator.set_drone_command(d.drone_id, drone_updated.fsm_state)
+            results.append({"drone_id": d.drone_id, "status": "SUCCESS", "detail": msg})
+        else:
+            results.append({"drone_id": d.drone_id, "status": "FAILED", "detail": msg})
+
+    return {
+        "status": "COMPLETED",
+        "command": cmd_req.command.value,
+        "results": results,
+        "message": f"Comando {cmd_req.command.value} ejecutado en {len(results)} drones."
+    }
+
 @router.post("/{drone_id}/command")
 async def send_drone_command(drone_id: str, cmd_req: DroneCommandRequest):
     """
