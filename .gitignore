@@ -51,7 +51,6 @@ coverage.xml
 *.db-wal
 *.db-shm
 *.wal
-*.shm
 ares.db*
 test_ares.db*
 
@@ -73,3 +72,15 @@ desktop.ini
 
 # Internal Agent working scratch & logs
 .agents/
+
+# ARES Project - Non-code artifacts (analysis, training data, colab notebooks)
+analsis_metrica/
+colab_training/
+dataset/
+dataset_multiclass/
+dataset_test/
+weights/
+*.log
+
+# Runtime and scratch
+.tmp/
