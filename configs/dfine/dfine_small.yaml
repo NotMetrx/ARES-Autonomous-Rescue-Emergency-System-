@@ -1,0 +1,29 @@
+model:
+  name: dfine
+  backbone: resnet50
+  num_classes: 8
+  pretrained: true
+  freeze_backbone: false
+training:
+  epochs: 40
+  batch_size: 8
+  accumulate_grad_batches: 2
+  precision: 16-mixed
+  optimizer: adamw
+  lr: 2.5e-4
+  weight_decay: 1.0e-4
+  warmup_steps: 500
+  lr_scheduler: cosine
+  min_lr: 5.0e-6
+  ema_decay: 0.999
+  gradient_clip_val: 1.0
+  num_workers: 2
+  pin_memory: true
+  seed: 42
+  deterministic: true
+checkpoint:
+  monitor: mAP50_95
+  mode: max
+  save_top_k: 3
+  save_last: true
+  filename: "dfine_small_{epoch:03d}_{mAP50_95:.4f}"
