@@ -1,0 +1,17 @@
+dataset:
+  name: ares_obstacles
+  root: data
+  train_annotations: annotations/train.json
+  val_annotations: annotations/val.json
+  test_annotations: annotations/test.json
+  img_dir: images
+classes:
+  0: person
+  1: vehicle
+  2: debris
+  3: tree
+  4: building_part
+  5: drone
+  6: obstacle_static
+  7: obstacle_dynamic
+num_classes: 8

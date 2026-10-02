@@ -1,42 +1,29 @@
+# -*- coding: utf-8 -*-
 """
-ARES AI and Vision Engine Package.
-Exports D-FINE neural object detector, 3D pinhole projection, 6-state Kalman tracking,
-and reactive 3D CPA evasion pipeline.
+AI Engine – ARES
+Detección D-FINE, Proyección 3D, Kalman 3D, Trayectoria, Evasión CPA, Pipeline E2E.
 """
-from src.ai.evasion import ReactiveEvasionEngine, DynamicObstacle, SAFETY_BUBBLE_RADIUS_METERS
-from src.ai.trajectory import generate_waypoints, haversine_distance
-from src.ai.benchmark import run_simulation_benchmark
-from src.ai.dfine import DFINEDetector, DetectionResult, CLASS_NAMES
-from src.ai.vision import (
-    SpatialProjector, CameraIntrinsics, MetricPrior, CLASS_METRIC_PRIORS
-)
-from src.ai.kalman import (
-    KalmanFilter3D, SingleObstacleKalmanFilter, TrackedObstacle,
-    MultiObstacleTracker3D, KalmanObstacleTracker, TrackedObstacleState
-)
-from src.ai.pipeline import VisionEvasionPipeline, PipelineResult, LatencyBreakdown
+
+from .dfine import DFINEDetector, DetectionResult
+from .vision import SpatialProjector, CameraIntrinsics
+from .kalman import KalmanFilter3D, State6D
+from .evasion import ReactiveEvasionEngine, DynamicObstacle
+from .trajectory import Trajectory3D, Waypoint3D
+from .pipeline import VisionEvasionPipeline, PipelineConfig
+from .benchmark import EvasionBenchmark
 
 __all__ = [
-    "ReactiveEvasionEngine",
-    "DynamicObstacle",
-    "SAFETY_BUBBLE_RADIUS_METERS",
-    "generate_waypoints",
-    "haversine_distance",
-    "run_simulation_benchmark",
     "DFINEDetector",
     "DetectionResult",
-    "CLASS_NAMES",
     "SpatialProjector",
     "CameraIntrinsics",
-    "MetricPrior",
-    "CLASS_METRIC_PRIORS",
     "KalmanFilter3D",
-    "SingleObstacleKalmanFilter",
-    "TrackedObstacle",
-    "MultiObstacleTracker3D",
-    "KalmanObstacleTracker",
-    "TrackedObstacleState",
+    "State6D",
+    "ReactiveEvasionEngine",
+    "DynamicObstacle",
+    "Trajectory3D",
+    "Waypoint3D",
     "VisionEvasionPipeline",
-    "PipelineResult",
-    "LatencyBreakdown",
+    "PipelineConfig",
+    "EvasionBenchmark",
 ]

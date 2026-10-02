@@ -1,0 +1,8 @@
+dataset:
+  name: coco
+  root: data
+  train_annotations: annotations/instances_train.json
+  val_annotations: annotations/instances_val.json
+  test_annotations: annotations/instances_test.json
+  img_dir: images
+classes: null
