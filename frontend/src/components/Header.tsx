@@ -74,185 +74,186 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-[#0b1220] border border-cyan-500/20 rounded-2xl px-4 py-2.5 shadow-xl backdrop-blur-md flex flex-wrap justify-between items-center gap-3">
-      {/* Brand & Fleet Info */}
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 font-black text-xl">
-          <Zap className="w-6 h-6 text-white" />
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-3px); }
+        }
+        @keyframes breathe {
+          0%, 100% { opacity: 0.8; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(1.15); }
+        }
+        @keyframes redGlowPulse {
+          0%, 100% { box-shadow: 0 0 8px rgba(244, 63, 94, 0.2), inset 0 0 8px rgba(244, 63, 94, 0.1); }
+          50% { box-shadow: 0 0 16px rgba(244, 63, 94, 0.5), inset 0 0 12px rgba(244, 63, 94, 0.2); }
+        }
+      `}</style>
+      <header className="backdrop-blur-2xl bg-slate-900/60 ring-1 ring-white/[0.08] rounded-3xl px-5 py-3 shadow-2xl shadow-black/40 flex flex-wrap justify-between items-center gap-4 transition-all duration-300 ease-out z-50">
+        {/* Brand & Fleet Info */}
+        <div className="flex items-center space-x-4">
+          <div 
+            className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 ring-1 ring-white/20"
+            style={{ animation: 'float 4s ease-in-out infinite' }}
+          >
+            <Zap className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2.5">
+              <h1 className="text-[15px] font-semibold tracking-wide bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
+                BIOSCAOUT TACTICAL C2
+              </h1>
+              <span className="px-2.5 py-0.5 text-[10px] font-medium tracking-wide rounded-full backdrop-blur-md bg-white/5 text-blue-200 ring-1 ring-white/10 shadow-inner">
+                SWARM v3.0
+              </span>
+              <span className="px-2.5 py-0.5 text-[10px] font-medium tracking-wide rounded-full backdrop-blur-md bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20 shadow-inner">
+                EN VUELO
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5 tracking-wide">
+              Control de Enjambre 3D • Evasión Sub-Milisegundo • ATAK & MAVLink Gateway
+            </p>
+          </div>
         </div>
-        <div>
-          <div className="flex items-center space-x-2">
-            <h1 className="text-base font-black tracking-tight bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">
-              BIOSCAOUT TACTICAL C2
-            </h1>
-            <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-700/60 shadow-sm">
-              SWARM v3.0
+
+        {/* Auxiliary Tactical Status Badges */}
+        <div className="flex items-center space-x-2.5 text-xs">
+          {/* WebSocket Telemetry Status */}
+          <div className="flex items-center space-x-2 backdrop-blur-xl bg-white/5 px-3.5 py-1.5 rounded-full ring-1 ring-white/10 shadow-inner transition-all duration-300">
+            <span 
+              className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'bg-rose-500'}`} 
+              style={{ animation: wsConnected ? 'breathe 3s ease-in-out infinite' : 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+            />
+            <span className="text-slate-400 font-medium">WS:</span>
+            <span className={`font-semibold ${wsConnected ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {wsConnected ? 'CONECTADO' : 'RECONECTANDO'}
             </span>
-            <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600 shadow-sm">
-              EN VUELO
+            <span className="font-mono text-blue-300 font-medium ml-1.5 opacity-80">{wsHz} Hz</span>
+          </div>
+
+          {/* AI Edge Engine */}
+          {aiStatus && (
+            <div className="hidden xl:flex items-center space-x-2 backdrop-blur-xl bg-white/5 px-3.5 py-1.5 rounded-full ring-1 ring-white/10 shadow-inner transition-all duration-300">
+              <Cpu className="w-3.5 h-3.5 text-blue-400 opacity-80" />
+              <span className="font-medium text-blue-200">{aiStatus.model_name}</span>
+              <span className="font-mono text-slate-300 ml-1">{aiStatus.fps.toFixed(1)} FPS</span>
+              <span className="text-white/20 mx-1">|</span>
+              <span className="font-mono text-slate-400">{aiStatus.gpu_temp_c.toFixed(1)}°C</span>
+            </div>
+          )}
+
+          {/* Wind Status */}
+          <div className="hidden lg:flex items-center space-x-2 backdrop-blur-xl bg-white/5 px-3.5 py-1.5 rounded-full ring-1 ring-white/10 shadow-inner transition-all duration-300">
+            <Wind className="w-3.5 h-3.5 text-sky-400 opacity-80" />
+            <span className="text-slate-400 font-medium">Viento:</span>
+            <span className="font-mono font-medium text-sky-200">
+              {wind.speed_ms.toFixed(1)} m/s @ {wind.direction_deg}°
             </span>
           </div>
-          <p className="text-[11px] text-slate-400">
-            Control de Enjambre 3D • Evasión Sub-Milisegundo • ATAK & MAVLink Gateway
-          </p>
-        </div>
-      </div>
 
-      {/* Auxiliary Tactical Status Badges */}
-      <div className="flex items-center space-x-2 text-xs">
-        {/* WebSocket Telemetry Status */}
-        <div className="flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
-          <span className={`w-2.5 h-2.5 rounded-full ${wsConnected ? 'bg-emerald-400 shadow-glow-emerald' : 'bg-rose-500 animate-ping'}`} />
-          <span className="text-slate-400 font-medium">WS:</span>
-          <span className={`font-bold ${wsConnected ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {wsConnected ? 'CONECTADO' : 'RECONECTANDO'}
-          </span>
-          <span className="font-mono text-cyan-300 font-bold ml-1">{wsHz} Hz</span>
-        </div>
-
-        {/* AI Edge Engine */}
-        {aiStatus && (
-          <div className="hidden xl:flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
-            <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="font-bold text-cyan-300">{aiStatus.model_name}</span>
-            <span className="font-mono text-amber-300 font-bold">{aiStatus.fps.toFixed(1)} FPS</span>
-            <span className="text-slate-500">|</span>
-            <span className="font-mono text-slate-300">{aiStatus.gpu_temp_c.toFixed(1)}°C</span>
+          {/* EW / Jamming Status */}
+          <div className="hidden md:flex items-center space-x-2 backdrop-blur-xl bg-white/5 px-3.5 py-1.5 rounded-full ring-1 ring-white/10 shadow-inner transition-all duration-300">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 opacity-80" />
+            <span className="text-slate-400 font-medium">EW:</span>
+            <span className="font-medium text-emerald-300">{antiJamming?.ew_environment || 'NOMINAL'}</span>
           </div>
-        )}
-
-        {/* Wind Status */}
-        <div className="hidden lg:flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
-          <Wind className="w-3.5 h-3.5 text-sky-400" />
-          <span className="text-slate-400">Viento:</span>
-          <span className="font-mono font-bold text-sky-300">
-            {wind.speed_ms.toFixed(1)} m/s @ {wind.direction_deg}°
-          </span>
         </div>
 
-        {/* EW / Jamming Status */}
-        <div className="hidden md:flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700/70">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-slate-400">EW:</span>
-          <span className="font-bold text-emerald-400">{antiJamming?.ew_environment || 'NOMINAL'}</span>
+        {/* View Mode & Tactical Controls */}
+        <div className="flex items-center space-x-3">
+          {/* Airspace View Mode Switcher - iOS Segmented Control Style */}
+          <div className="flex items-center backdrop-blur-2xl bg-black/20 p-1 rounded-full ring-1 ring-white/5 shadow-inner">
+            {[
+              { id: '2d', icon: Radio, label: '2D Radar' },
+              { id: '3d', icon: Layers, label: '3D Real' },
+              { id: 'map', icon: MapIcon, label: 'Mapa' },
+              { id: 'camera', icon: CameraIcon, label: 'Cámara' },
+              { id: 'split', icon: Grid2X2, label: 'Split' },
+            ].map((mode) => {
+              const Icon = mode.icon;
+              const isActive = viewMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => setViewMode(mode.id as any)}
+                  className={`flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                    isActive 
+                      ? 'bg-white/15 text-white shadow-md ring-1 ring-white/20' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-300' : 'text-slate-500'}`} />
+                  <span>{mode.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tactical AI Copilot Toggle */}
+          <button
+            onClick={() => {
+              tacticalAudio.playButtonBeep();
+              toggleCopilot();
+            }}
+            className={`group flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 relative overflow-hidden ${
+              copilotOpen
+                ? 'text-white'
+                : 'backdrop-blur-md bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white ring-1 ring-white/10'
+            }`}
+            title="Abrir Copiloto Táctico IA con reconocimiento de voz y lenguaje natural"
+          >
+            {copilotOpen && (
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 opacity-100" />
+            )}
+            {copilotOpen && (
+              <div className="absolute inset-0 ring-1 ring-inset ring-white/20 rounded-xl" />
+            )}
+            <Bot className={`w-4 h-4 relative z-10 transition-colors duration-300 ${copilotOpen ? 'text-blue-300' : 'text-slate-400 group-hover:text-blue-300'}`} />
+            <span className="hidden sm:inline relative z-10">COPILOTO IA</span>
+          </button>
+
+          {/* Tactical Voice Toggle */}
+          <button
+            onClick={toggleVoice}
+            className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 backdrop-blur-md ring-1 ${
+              voiceEnabled
+                ? 'bg-blue-500/10 ring-blue-500/30 text-blue-200'
+                : 'bg-white/5 ring-white/10 text-slate-400 hover:text-slate-300 hover:bg-white/10'
+            }`}
+            title="Voz Táctica Automática (V)"
+          >
+            {voiceEnabled ? <Volume2 className="w-4 h-4 text-blue-400" /> : <VolumeX className="w-4 h-4" />}
+            <span className="hidden md:inline">{voiceEnabled ? 'VOZ ON' : 'VOZ OFF'}</span>
+          </button>
+
+          {/* Black Box REC Button */}
+          <button
+            onClick={toggleRecording}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 backdrop-blur-md ring-1 ${
+              recordingBlackBox
+                ? 'bg-rose-500/10 ring-rose-500/30 text-rose-300'
+                : 'bg-white/5 ring-white/10 text-slate-400 hover:text-slate-300 hover:bg-white/10'
+            }`}
+            style={recordingBlackBox ? { animation: 'redGlowPulse 2s ease-in-out infinite' } : {}}
+            title="Grabación Caja Negra en Disco"
+          >
+            <CircleDot className={`w-3.5 h-3.5 ${recordingBlackBox ? 'text-rose-400' : ''}`} />
+            <span>{recordingBlackBox ? `REC ${formatSec(recordingDurationSec)}` : 'REC'}</span>
+          </button>
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-300 ease-out hover:scale-[1.05] active:scale-[0.95] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 backdrop-blur-md bg-white/5 ring-1 ring-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+            title="Alternar Modo Visual"
+          >
+            {theme === 'dark' && <Moon className="w-4 h-4 text-blue-200" />}
+            {theme === 'nvg' && <span className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />}
+            {theme === 'amber' && <span className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />}
+            {theme === 'light' && <Sun className="w-4 h-4 text-amber-200" />}
+          </button>
         </div>
-      </div>
-
-      {/* View Mode & Tactical Controls */}
-      <div className="flex items-center space-x-2">
-        {/* Airspace View Mode Switcher */}
-        <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/70">
-          <button
-            onClick={() => setViewMode('2d')}
-            className={`flex items-center space-x-1 px-3 py-1.5 text-xs font-black rounded-lg transition ${
-              viewMode === '2d' 
-                ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-md shadow-cyan-500/25 ring-1 ring-cyan-400' 
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Radio className="w-3.5 h-3.5 text-cyan-300" />
-            <span>2D Radar</span>
-          </button>
-          <button
-            onClick={() => setViewMode('3d')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-black rounded-lg transition ${
-              viewMode === '3d' 
-                ? 'bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 text-white shadow-md shadow-cyan-500/30 ring-1 ring-cyan-400' 
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-cyan-300" />
-            <span>3D Real</span>
-          </button>
-          <button
-            onClick={() => setViewMode('map')}
-            className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg transition ${
-              viewMode === 'map' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <MapIcon className="w-3.5 h-3.5" />
-            <span>Mapa</span>
-          </button>
-          <button
-            onClick={() => setViewMode('camera')}
-            className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg transition ${
-              viewMode === 'camera' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <CameraIcon className="w-3.5 h-3.5" />
-            <span>Cámara</span>
-          </button>
-          <button
-            onClick={() => setViewMode('split')}
-            className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-bold rounded-lg transition ${
-              viewMode === 'split' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Grid2X2 className="w-3.5 h-3.5" />
-            <span>Split</span>
-          </button>
-        </div>
-
-        {/* Tactical AI Copilot Toggle */}
-        <button
-          onClick={() => {
-            tacticalAudio.playButtonBeep();
-            toggleCopilot();
-          }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-black transition shadow-lg ${
-            copilotOpen
-              ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 border-cyan-400 text-white shadow-cyan-500/25 ring-2 ring-cyan-400/50'
-              : 'bg-slate-900/90 border-cyan-500/40 text-cyan-300 hover:bg-slate-800'
-          }`}
-          title="Abrir Copiloto Táctico IA con reconocimiento de voz y lenguaje natural"
-        >
-          <Bot className="w-4 h-4 text-cyan-300" />
-          <span className="hidden sm:inline font-mono">COPILOTO IA</span>
-        </button>
-
-        {/* Tactical Voice Toggle */}
-        <button
-          onClick={toggleVoice}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
-            voiceEnabled
-              ? 'bg-slate-900 border-slate-700 text-cyan-300 hover:bg-slate-800'
-              : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-slate-300'
-          }`}
-          title="Voz Táctica Automática (V)"
-        >
-          {voiceEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
-          <span>{voiceEnabled ? 'VOZ ON' : 'VOZ OFF'}</span>
-        </button>
-
-        {/* Black Box REC Button */}
-        <button
-          onClick={toggleRecording}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
-            recordingBlackBox
-              ? 'bg-rose-900 border-rose-500 text-rose-100 animate-pulse'
-              : 'bg-rose-950/70 hover:bg-rose-900 border-rose-700 text-rose-200'
-          }`}
-          title="Grabación Caja Negra en Disco"
-        >
-          <CircleDot className="w-3.5 h-3.5 text-rose-400" />
-          <span>{recordingBlackBox ? `REC ${formatSec(recordingDurationSec)}` : 'REC CAJA NEGRA'}</span>
-        </button>
-
-        {/* Theme Toggle (Cyber Dark / NVG / Amber CRT / Sunlight Field) */}
-        <button
-          onClick={toggleTheme}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-white transition text-xs font-bold shadow-sm"
-          title="Alternar Modo Visual: Cyber Dark / NVG Verde Fósforo / Ámbar CRT / Luz Día"
-        >
-          {theme === 'dark' && <Moon className="w-4 h-4 text-cyan-400" />}
-          {theme === 'nvg' && <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />}
-          {theme === 'amber' && <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />}
-          {theme === 'light' && <Sun className="w-4 h-4 text-amber-400" />}
-          <span className="hidden sm:inline font-mono">
-            {theme === 'dark' ? 'CYBER DARK' : theme === 'nvg' ? 'NVG VERDE' : theme === 'amber' ? 'ÁMBAR CRT' : 'MODO DÍA'}
-          </span>
-        </button>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };

@@ -49,13 +49,16 @@ export const BlackBoxBar: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#0b1220] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div className="relative backdrop-blur-xl bg-slate-900/40 ring-1 ring-white/10 rounded-3xl p-5 shadow-2xl overflow-hidden select-none flex flex-wrap items-center justify-between gap-4 text-xs">
+      {/* Top Accent Gradient Line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+
       <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-950 border border-amber-600 flex items-center justify-center text-amber-300 font-bold">
-          <Film className="w-4 h-4" />
+        <div className="w-10 h-10 rounded-2xl bg-amber-500/15 ring-1 ring-amber-500/30 flex items-center justify-center text-amber-300 font-bold">
+          <Film className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-slate-200">Reproductor Táctico de Caja Negra (Flight Recorder)</h3>
+          <h3 className="font-semibold text-sm text-white">Reproductor Táctico de Caja Negra (Flight Recorder)</h3>
           <p className="text-[11px] text-slate-400">Revisión forense After-Action Review (AAR) para jueces</p>
         </div>
       </div>
@@ -65,7 +68,7 @@ export const BlackBoxBar: React.FC = () => {
         <select
           value={selectedSession}
           onChange={e => setSelectedSession(e.target.value)}
-          className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 font-mono text-xs outline-none"
+          className="bg-black/40 border border-white/10 text-white rounded-xl px-3 py-2 font-mono text-xs outline-none focus:border-amber-400"
         >
           {sessions.length > 0 ? (
             sessions.map(s => <option key={s} value={s}>{s}</option>)
@@ -78,7 +81,7 @@ export const BlackBoxBar: React.FC = () => {
         {isPlaying ? (
           <button
             onClick={handleStopReplay}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition shadow-md"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-amber-600/20"
           >
             <Pause className="w-3.5 h-3.5" />
             <span>PAUSAR / DETENER</span>
@@ -87,21 +90,23 @@ export const BlackBoxBar: React.FC = () => {
           <button
             onClick={handleStartReplay}
             disabled={!selectedSession}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-md"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-40 text-white font-medium rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-blue-500/20"
           >
             <Play className="w-3.5 h-3.5" />
             <span>REPRODUCIR</span>
           </button>
         )}
 
-        {/* Speed multiplier buttons */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5">
+        {/* Speed multiplier buttons - iOS Segmented Control */}
+        <div className="flex items-center bg-black/40 ring-1 ring-white/10 rounded-xl p-0.5">
           {[0.5, 1.0, 2.0, 5.0].map(s => (
             <button
               key={s}
               onClick={() => handleSpeedChange(s)}
-              className={`px-2 py-1 font-mono font-bold text-[11px] rounded-lg transition ${
-                speed === s ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-mono text-[11px] font-medium transition-all duration-200 ${
+                speed === s
+                  ? 'bg-white/15 text-white shadow-sm ring-1 ring-white/20'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               {s}x

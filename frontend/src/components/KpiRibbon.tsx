@@ -1,127 +1,194 @@
-import React from 'react';
-import { useSwarmStore } from '../store/useSwarmStore';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, AlertTriangle, BatteryMedium, Compass, Target, Radio, PlaneLanding } from 'lucide-react';
+import { useSwarmStore } from '../store/useSwarmStore';
 import { tacticalVoice } from '../services/tacticalVoice';
 
 export const KpiRibbon: React.FC = () => {
-  const { drones, alerts, coveragePct, coveredAreaM2, survivorsInView, hazardsInView } = useSwarmStore();
+  const drones = useSwarmStore(state => state.drones) || [];
+  const alerts = useSwarmStore(state => state.alerts) || [];
+  const coveragePct = useSwarmStore(state => state.coveragePct) || 0;
+  const coveredAreaM2 = useSwarmStore(state => state.coveredAreaM2) || 0;
+  const survivorsInView = useSwarmStore(state => state.survivorsInView) || 0;
+  const hazardsInView = useSwarmStore(state => state.hazardsInView) || 0;
 
-  const activeCount = drones.length;
-  const avgBattery = activeCount > 0 
-    ? (drones.reduce((sum, d) => sum + d.battery, 0) / activeCount).toFixed(1)
-    : '0';
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // Real-time in-view vision detections (non-cumulative: counts real persons in current frame)
-  const survivorsCount = survivorsInView;
-  const hazardsCount = hazardsInView;
+  const activeDrones = drones.length;
+  const avgBattery = drones.length > 0 
+    ? Math.round(drones.reduce((acc, d) => acc + (d.battery || 0), 0) / drones.length) 
+    : 0;
 
-  const isSafetyBreached = drones.some(d => d.in_safety_breach || (d.nearest_distance_m !== null && (d.nearest_distance_m ?? 999) < 15.0));
+  // Assume safety breach if there are active alerts
+  const isSafetyBreached = alerts.length > 0;
+  
+  const hasDetections = survivorsInView > 0 || hazardsInView > 0;
 
   const handleFleetRTH = async () => {
     try {
+      tacticalVoice.speak("Initiating emergency return to home for active fleet.");
       await fetch('/api/v1/drones/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command: 'RTH' }),
+        body: JSON.stringify({ command: 'RTH' })
       });
-      tacticalVoice.speak('Atención: Retorno a base de emergencia ordenado para toda la flota', 'rth', true);
-    } catch (e) {
-      console.warn('RTH error:', e);
+    } catch (error) {
+      console.error('Failed to issue RTH command', error);
     }
   };
 
+  const baseCardStyle = `
+    relative overflow-hidden backdrop-blur-xl bg-slate-900/40 ring-1 ring-white/10 
+    rounded-3xl p-5 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 ease-out flex flex-col justify-between
+  `;
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5 my-3">
-      {/* 1. Drones Activos */}
-      <div className="bg-[#0b1220] border border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Flota Activa</span>
-          <div className="flex items-baseline space-x-1 mt-0.5">
-            <span className="text-xl font-black text-cyan-400">{activeCount}</span>
-            <span className="text-xs text-slate-500 font-semibold">/ 3 UAVs</span>
+    <div className="w-full">
+      <style>{`
+        @keyframes slideUpFade {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes subtlePulse {
+          0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+          70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        @keyframes breathRed {
+          0%, 100% { background-color: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.2); box-shadow: 0 0 15px rgba(220, 38, 38, 0.1); }
+          50% { background-color: rgba(220, 38, 38, 0.15); border-color: rgba(220, 38, 38, 0.4); box-shadow: 0 0 25px rgba(220, 38, 38, 0.3); }
+        }
+        .animate-card-enter {
+          animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          opacity: 0;
+        }
+        .breathing-red-glow {
+          animation: breathRed 3s ease-in-out infinite;
+        }
+      `}</style>
+      
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        
+        {/* 1. Flota Activa */}
+        <div className={`${baseCardStyle} animate-card-enter`} style={{ animationDelay: '0ms' }}>
+          <Radio className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Flota Activa</span>
+            <Radio className="w-4 h-4 text-blue-400 opacity-80" />
           </div>
-          <span className="text-[10px] text-emerald-400 font-medium">Formación Mesh 3D</span>
-        </div>
-        <Radio className="w-6 h-6 text-cyan-500/40" />
-      </div>
-
-      {/* 2. Batería Promedio */}
-      <div className="bg-[#0b1220] border border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Batería Promedio</span>
-          <div className="flex items-baseline space-x-1 mt-0.5">
-            <span className="text-xl font-black text-emerald-400 font-mono">{avgBattery}%</span>
+          <div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-mono font-medium tabular-nums text-slate-100">{activeDrones}</span>
+              <span className="text-sm font-medium text-slate-500">/ 3</span>
+            </div>
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">Autonomía: ~24 min</span>
         </div>
-        <BatteryMedium className="w-6 h-6 text-emerald-500/40" />
-      </div>
 
-      {/* 3. Cobertura SAR */}
-      <div className="bg-[#0b1220] border border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cobertura SAR</span>
-          <div className="flex items-baseline space-x-1 mt-0.5">
-            <span className="text-xl font-black text-sky-400 font-mono">{coveragePct.toFixed(1)}%</span>
+        {/* 2. Batería Promedio */}
+        <div className={`${baseCardStyle} animate-card-enter`} style={{ animationDelay: '50ms' }}>
+          <BatteryMedium className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Batería Prom.</span>
+            <BatteryMedium className={`w-4 h-4 opacity-80 ${avgBattery < 20 ? 'text-rose-500' : 'text-emerald-400'}`} />
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">{coveredAreaM2.toFixed(0)} m² barridos</span>
-        </div>
-        <Compass className="w-6 h-6 text-sky-500/40" />
-      </div>
-
-      {/* 4. Víctimas y Objetivos */}
-      <div className="bg-[#0b1220] border border-slate-800 rounded-xl p-3 flex items-center justify-between shadow-sm">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Detecciones IA</span>
-          <div className="flex items-baseline space-x-2 mt-0.5">
-            <span className={`text-xl font-black ${survivorsCount > 0 ? 'text-emerald-400 animate-pulse' : 'text-slate-400'}`}>
-              {survivorsCount}
-            </span>
-            <span className="text-xs text-slate-400 font-medium">víctimas</span>
-            <span className="text-sm font-black text-amber-400">{hazardsCount}</span>
-            <span className="text-xs text-slate-400 font-medium">fuego</span>
+          <div>
+            <div className="flex items-baseline gap-1 mb-3">
+              <span className="text-3xl font-mono font-medium tabular-nums text-slate-100">{avgBattery}</span>
+              <span className="text-sm font-medium text-slate-500">%</span>
+            </div>
+            <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${avgBattery < 20 ? 'bg-rose-500' : 'bg-emerald-500'}`} 
+                style={{ width: `${avgBattery}%` }}
+              />
+            </div>
           </div>
-          <span className="text-[10px] text-cyan-400 font-medium">
-            {survivorsCount > 0 ? '● En Tiempo Real (En Toma)' : 'D-FINE (RT-DETR) Escaneando'}
-          </span>
         </div>
-        <Target className={`w-6 h-6 ${survivorsCount > 0 ? 'text-emerald-400' : 'text-indigo-500/40'}`} />
-      </div>
 
-      {/* 5. Burbuja de Seguridad Táctica */}
-      <div className={`border rounded-xl p-3 flex items-center justify-between shadow-sm ${
-        isSafetyBreached 
-          ? 'bg-rose-950/70 border-rose-500 animate-pulse' 
-          : 'bg-[#0b1220] border-slate-800'
-      }`}>
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Burbuja 15m</span>
-          <div className="mt-0.5">
-            <span className={`text-base font-black ${isSafetyBreached ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {isSafetyBreached ? '⚠️ EVASIÓN REACTIVA' : 'SEGURA'}
-            </span>
+        {/* 3. Cobertura SAR */}
+        <div className={`${baseCardStyle} animate-card-enter`} style={{ animationDelay: '100ms' }}>
+          <Compass className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Cobertura SAR</span>
+            <Target className="w-4 h-4 text-purple-400 opacity-80" />
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">
-            {isSafetyBreached ? '< 50ms anti-colisión' : 'Separación óptima'}
-          </span>
+          <div>
+            <div className="flex items-baseline gap-1 mb-3">
+              <span className="text-3xl font-mono font-medium tabular-nums text-slate-100">{coveragePct.toFixed(1)}</span>
+              <span className="text-sm font-medium text-slate-500">%</span>
+            </div>
+            <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full rounded-full bg-purple-500 transition-all duration-1000 ease-out" 
+                style={{ width: `${coveragePct}%` }}
+              />
+            </div>
+          </div>
         </div>
-        {isSafetyBreached ? (
-          <AlertTriangle className="w-6 h-6 text-rose-400 animate-bounce" />
-        ) : (
-          <ShieldCheck className="w-6 h-6 text-emerald-500/40" />
-        )}
-      </div>
 
-      {/* 6. Parada de Emergencia / RTH Flota */}
-      <div className="bg-[#0b1220] border border-slate-800 rounded-xl p-2.5 flex items-center justify-center">
-        <button
-          onClick={handleFleetRTH}
-          className="w-full h-full bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-extrabold rounded-lg text-xs py-2 px-3 flex items-center justify-center space-x-2 transition shadow-lg shadow-rose-900/30"
-          title="Ordena Return-To-Home inmediato a todos los drones (ESPACIO)"
+        {/* 4. Detecciones IA */}
+        <div 
+          className={`${baseCardStyle} animate-card-enter ${hasDetections ? 'ring-emerald-500/30' : ''}`} 
+          style={{ 
+            animationDelay: '150ms',
+            animation: hasDetections ? 'slideUpFade 0.6s cubic-bezier(0.16,1,0.3,1) forwards, subtlePulse 2s infinite' : undefined
+          }}
         >
-          <PlaneLanding className="w-4 h-4" />
-          <span>RTH DE EMERGENCIA (ESPACIO)</span>
-        </button>
+          <Target className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Detecciones IA</span>
+            <div className="relative">
+              {hasDetections && (
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              )}
+              <ShieldCheck className={`w-4 h-4 opacity-80 ${hasDetections ? 'text-emerald-400' : 'text-slate-500'}`} />
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div>
+              <div className="text-[10px] text-slate-500 mb-1">VÍCTIMAS</div>
+              <span className="text-2xl font-mono font-medium tabular-nums text-slate-100">{survivorsInView}</span>
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-500 mb-1">PELIGROS</div>
+              <span className="text-2xl font-mono font-medium tabular-nums text-slate-100">{hazardsInView}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Burbuja 15m (Safety Breach) */}
+        <div 
+          className={`${baseCardStyle} animate-card-enter ${isSafetyBreached ? 'breathing-red-glow' : ''}`} 
+          style={{ animationDelay: '200ms' }}
+        >
+          <AlertTriangle className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Burbuja 15m</span>
+            <AlertTriangle className={`w-4 h-4 opacity-80 ${isSafetyBreached ? 'text-rose-400' : 'text-slate-500'}`} />
+          </div>
+          <div>
+            <span className={`text-lg font-medium tracking-wide ${isSafetyBreached ? 'text-rose-300' : 'text-slate-300'}`}>
+              {isSafetyBreached ? 'VULNERADA' : 'SEGURO'}
+            </span>
+          </div>
+        </div>
+
+        {/* 6. RTH Emergency Button */}
+        <div className="animate-card-enter flex" style={{ animationDelay: '250ms' }}>
+          <button 
+            onClick={handleFleetRTH}
+            className="w-full relative overflow-hidden rounded-3xl p-5 flex flex-col items-center justify-center gap-2 group transition-all duration-300 ease-out active:scale-95 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(220,38,38,0.3)] bg-gradient-to-br from-rose-600/90 to-red-900/90 ring-1 ring-white/20"
+          >
+            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <PlaneLanding className="w-8 h-8 text-white drop-shadow-md group-hover:-translate-y-1 transition-transform duration-300" />
+            <span className="text-xs font-bold uppercase tracking-widest text-white drop-shadow-sm">Emergencia</span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-rose-200">Retorno a Base</span>
+          </button>
+        </div>
+
       </div>
     </div>
   );

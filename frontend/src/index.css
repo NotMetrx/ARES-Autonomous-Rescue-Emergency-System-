@@ -13,62 +13,128 @@ body {
   color: #f8fafc;
   letter-spacing: -0.015em;
   transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
 }
 
-html.light body {
-  background-color: #f1f5f9;
-  color: #0f172a;
+/* Subtle noise texture */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
 }
 
-html.light .bg-\[\#0b1220\] {
-  background-color: #ffffff !important;
+html.light body { background-color: #f1f5f9; color: #0f172a; }
+html.light .bg-\[\#0b1220\] { background-color: #ffffff !important; }
+html.light .bg-\[\#111c30\] { background-color: #f8fafc !important; }
+html.light .bg-slate-900\/90, html.light .bg-slate-900\/80, html.light .bg-slate-900\/70, html.light .bg-slate-900\/60, html.light .bg-slate-950 { background-color: #f8fafc !important; color: #0f172a !important; }
+html.light .border-slate-800, html.light .border-slate-700 { border-color: #cbd5e1 !important; }
+html.light .text-slate-400, html.light .text-slate-500 { color: #475569 !important; }
+html.nvg { filter: hue-rotate(80deg) saturate(1.4) contrast(1.15) brightness(1.05); }
+html.amber { filter: sepia(0.85) saturate(2.4) hue-rotate(345deg); }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.28); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+@layer utilities {
+  .glass-panel {
+    @apply backdrop-blur-xl bg-white/5 ring-1 ring-white/10 shadow-xl shadow-black/20;
+  }
+  
+  .glass-card {
+    @apply backdrop-blur-2xl bg-white/10 ring-1 ring-white/20 shadow-2xl shadow-black/40;
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-glow:hover {
+    @apply shadow-[0_0_20px_rgba(56,189,248,0.3)] ring-white/30 scale-[1.02];
+  }
+
+  .hover-glow:active {
+    @apply scale-[0.98];
+  }
+
+  .number-transition {
+    @apply transition-all duration-500 ease-out;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Animations */
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+  .animate-slideUp {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+  .animate-slideDown {
+    animation: slideDown 0.5s ease-out forwards;
+  }
+  .animate-scaleIn {
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+  }
+  .animate-pulseGlow {
+    animation: pulseGlow 2s infinite ease-in-out;
+  }
+  .animate-float {
+    animation: float 3s infinite ease-in-out;
+  }
+  .animate-counterSpin {
+    animation: counterSpin 0.5s ease-out forwards;
+  }
 }
 
-html.light .bg-\[\#111c30\] {
-  background-color: #f8fafc !important;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-html.light .bg-slate-900\/90,
-html.light .bg-slate-900\/80,
-html.light .bg-slate-900\/70,
-html.light .bg-slate-900\/60,
-html.light .bg-slate-950 {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-html.light .border-slate-800,
-html.light .border-slate-700 {
-  border-color: #cbd5e1 !important;
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-html.light .text-slate-400,
-html.light .text-slate-500 {
-  color: #475569 !important;
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* Tactical NVG (Night Vision Goggles) Phosphor Green Mode */
-html.nvg {
-  filter: hue-rotate(80deg) saturate(1.4) contrast(1.15) brightness(1.05);
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Tactical Amber CRT Radar Mode */
-html.amber {
-  filter: sepia(0.85) saturate(2.4) hue-rotate(345deg);
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.5); }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.28);
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+
+@keyframes counterSpin {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

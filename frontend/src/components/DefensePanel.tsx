@@ -62,31 +62,40 @@ export const DefensePanel: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#0b1220] border border-slate-800 rounded-2xl p-4 shadow-xl">
-      <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-        <div className="flex items-center space-x-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-400" />
-          <h2 className="font-bold text-sm text-slate-100 uppercase tracking-wide">
-            Defensa Táctica, Guerra Electrónica & Gateway ATAK (MIL-STD)
-          </h2>
+    <div className="relative backdrop-blur-xl bg-slate-900/40 ring-1 ring-white/10 rounded-3xl p-5 shadow-2xl overflow-hidden select-none">
+      {/* Top Accent Gradient Line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 border-b border-white/[0.08] pb-4">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 ring-1 ring-emerald-500/30 flex items-center justify-center">
+            <ShieldCheck className="w-4.5 h-4.5 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-sm text-white tracking-wide">
+              Defensa Táctica, Guerra Electrónica & Gateway ATAK (MIL-STD)
+            </h2>
+            <p className="text-[11px] text-slate-400">Protección EW • Navegación inercial • Gateway táctico CoT</p>
+          </div>
         </div>
-        <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+        <span className="px-2.5 py-1 text-[10px] font-semibold rounded-full bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 font-mono">
           ATAK / CoT 4242 UDP
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* 1. Módulo Anti-Jamming & Navegación Inercial */}
-        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+        <div className="backdrop-blur-md bg-white/[0.03] p-4 rounded-2xl ring-1 ring-white/[0.06] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-slate-200 flex items-center">
+              <h3 className="text-xs font-semibold text-white flex items-center">
                 <Radio className="w-3.5 h-3.5 mr-1.5 text-cyan-400" /> Anti-Jamming & Anti-Spoofing GPS
               </h3>
-              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+              <span className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full font-mono ring-1 ${
                 antiJamming?.jamming_active || antiJamming?.spoofing_active
-                  ? 'bg-rose-950 text-rose-300 border border-rose-600 animate-pulse'
-                  : 'bg-emerald-950 text-emerald-300 border border-emerald-700'
+                  ? 'bg-rose-500/15 text-rose-300 ring-rose-500/40 animate-pulse'
+                  : 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30'
               }`}>
                 {antiJamming?.gps_mode || 'GPS_FIX_3D'}
               </span>
@@ -96,40 +105,40 @@ export const DefensePanel: React.FC = () => {
               Detecta saltos anómalos o ráfagas espurias de posición y conmuta a Dead Reckoning inercial.
             </p>
 
-            <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 text-xs mb-3">
+            <div className="bg-black/30 p-3 rounded-xl ring-1 ring-white/[0.06] space-y-1.5 text-xs mb-4 font-mono">
               <div className="flex justify-between">
                 <span className="text-slate-400">Satélites Visibles:</span>
-                <span className="font-mono text-cyan-300 font-bold">{antiJamming?.sats_visible ?? 16} sats</span>
+                <span className="text-cyan-300 font-semibold">{antiJamming?.sats_visible ?? 16} sats</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Incertidumbre:</span>
-                <span className="font-mono text-slate-200">±{antiJamming?.position_uncertainty_m.toFixed(1) ?? '0.8'} m</span>
+                <span className="text-slate-200 font-semibold">±{antiJamming?.position_uncertainty_m.toFixed(1) ?? '0.8'} m</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Ambiente EW:</span>
-                <span className="font-bold text-emerald-400">{antiJamming?.ew_environment ?? 'SEGURO'}</span>
+                <span className="font-semibold text-emerald-400">{antiJamming?.ew_environment ?? 'SEGURO'}</span>
               </div>
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-slate-800">
+          <div className="space-y-2 pt-2 border-t border-white/[0.08]">
             <div className="flex space-x-2">
               <button
                 onClick={() => handleSimulateJamming('RF_JAMMING')}
-                className="flex-1 py-1 px-2 bg-rose-950 hover:bg-rose-900 border border-rose-700 text-rose-200 text-[10px] font-bold rounded transition"
+                className="flex-1 py-1.5 px-2 bg-rose-500/15 hover:bg-rose-500/25 ring-1 ring-rose-500/30 text-rose-200 text-[10px] font-medium rounded-xl transition-all hover:scale-105 active:scale-95"
               >
                 Inyectar Jamming
               </button>
               <button
                 onClick={() => handleSimulateJamming('SPOOFING_TELEPORT')}
-                className="flex-1 py-1 px-2 bg-amber-950 hover:bg-amber-900 border border-amber-700 text-amber-200 text-[10px] font-bold rounded transition"
+                className="flex-1 py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500/25 ring-1 ring-amber-500/30 text-amber-200 text-[10px] font-medium rounded-xl transition-all hover:scale-105 active:scale-95"
               >
                 Inyectar Spoofing
               </button>
             </div>
             <button
               onClick={handleClearAttack}
-              className="w-full py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold rounded transition flex items-center justify-center space-x-1"
+              className="w-full py-1.5 bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.06] text-cyan-300 text-[10px] font-medium rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-1"
             >
               <RefreshCw className="w-3 h-3" />
               <span>Restablecer GPS Seguro</span>
@@ -138,22 +147,22 @@ export const DefensePanel: React.FC = () => {
         </div>
 
         {/* 2. Estimador Aerodinámico & Punto de No Retorno (PNR) */}
-        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+        <div className="backdrop-blur-md bg-white/[0.03] p-4 rounded-2xl ring-1 ring-white/[0.06]">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold text-slate-200 flex items-center">
+            <h3 className="text-xs font-semibold text-white flex items-center">
               <Wind className="w-3.5 h-3.5 mr-1.5 text-sky-400" /> Vector de Viento & PNR Dinámico
             </h3>
-            <span className="font-mono text-[11px] font-bold text-sky-300">
+            <span className="font-mono text-[11px] font-semibold text-sky-300">
               {wind.speed_ms.toFixed(1)} m/s @ {wind.direction_deg}°
             </span>
           </div>
 
-          <p className="text-[11px] text-slate-400 mb-2">
+          <p className="text-[11px] text-slate-400 mb-3">
             Calcula la batería mínima requerida para superar vientos en contra al retornar a base.
           </p>
 
           {/* Wind Sliders */}
-          <div className="grid grid-cols-2 gap-2 mb-3 bg-slate-950 p-2 rounded-lg border border-slate-800 text-[11px]">
+          <div className="grid grid-cols-2 gap-3 mb-3 bg-black/30 p-3 rounded-xl ring-1 ring-white/[0.06] text-[11px]">
             <div>
               <span className="text-slate-400 block mb-1">Velocidad: {wind.speed_ms.toFixed(1)} m/s</span>
               <input
@@ -163,7 +172,7 @@ export const DefensePanel: React.FC = () => {
                 step="0.5"
                 value={wind.speed_ms}
                 onChange={e => handleUpdateWind(parseFloat(e.target.value), wind.direction_deg)}
-                className="w-full accent-sky-400"
+                className="w-full accent-sky-400 h-1 bg-white/10 rounded-full"
               />
             </div>
             <div>
@@ -175,20 +184,20 @@ export const DefensePanel: React.FC = () => {
                 step="15"
                 value={wind.direction_deg}
                 onChange={e => handleUpdateWind(wind.speed_ms, parseInt(e.target.value))}
-                className="w-full accent-sky-400"
+                className="w-full accent-sky-400 h-1 bg-white/10 rounded-full"
               />
             </div>
           </div>
 
           {/* PNR Table */}
           <div className="space-y-1.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Margen PNR por Dron:</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Margen PNR por Dron:</span>
             {pnrList.length > 0 ? (
               pnrList.map(p => (
-                <div key={p.drone_id} className="flex items-center justify-between text-xs bg-slate-950 px-2 py-1 rounded border border-slate-800">
-                  <span className="font-bold text-slate-200">{p.drone_id}</span>
-                  <span className="text-slate-400">Bat Req: {p.rth_battery_required.toFixed(1)}%</span>
-                  <span className={`font-mono font-bold ${
+                <div key={p.drone_id} className="flex items-center justify-between text-xs bg-black/30 px-3 py-1.5 rounded-xl ring-1 ring-white/[0.05]">
+                  <span className="font-semibold text-white">{p.drone_id}</span>
+                  <span className="text-slate-400 text-[11px]">Bat Req: {p.rth_battery_required.toFixed(1)}%</span>
+                  <span className={`font-mono font-semibold text-[11px] ${
                     p.margin_pct > 30 ? 'text-emerald-400' : p.margin_pct > 0 ? 'text-amber-400' : 'text-rose-400 animate-pulse'
                   }`}>
                     Margen: {p.margin_pct.toFixed(0)}%
@@ -196,7 +205,7 @@ export const DefensePanel: React.FC = () => {
                 </div>
               ))
             ) : (
-              <div className="text-xs text-slate-500 italic text-center py-2">
+              <div className="text-xs text-slate-500 italic text-center py-3">
                 Todos los UAVs en margen seguro (&gt;50%)
               </div>
             )}
@@ -204,13 +213,13 @@ export const DefensePanel: React.FC = () => {
         </div>
 
         {/* 3. Gateway Militar ATAK & Cursor-on-Target (CoT) */}
-        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+        <div className="backdrop-blur-md bg-white/[0.03] p-4 rounded-2xl ring-1 ring-white/[0.06] flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-slate-200 flex items-center">
+              <h3 className="text-xs font-semibold text-white flex items-center">
                 <Send className="w-3.5 h-3.5 mr-1.5 text-indigo-400" /> ATAK / WinTAK CoT XML Gateway
               </h3>
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-950 text-indigo-300 border border-indigo-700">
+              <span className="px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-500/30">
                 UDP 4242
               </span>
             </div>
@@ -220,10 +229,10 @@ export const DefensePanel: React.FC = () => {
             </p>
 
             {/* RF Link simulator */}
-            <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs mb-3 space-y-1.5">
+            <div className="bg-black/30 p-3 rounded-xl ring-1 ring-white/[0.06] text-xs mb-3 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Enlace RF LoRa 915MHz:</span>
-                <span className="font-mono text-cyan-300 font-bold">{rfDistance}m</span>
+                <span className="font-mono text-cyan-300 font-semibold">{rfDistance}m</span>
               </div>
               <input
                 type="range"
@@ -232,10 +241,10 @@ export const DefensePanel: React.FC = () => {
                 step="100"
                 value={rfDistance}
                 onChange={e => setRfDistance(parseInt(e.target.value))}
-                className="w-full accent-cyan-400"
+                className="w-full accent-cyan-400 h-1 bg-white/10 rounded-full"
               />
               <div className="flex justify-between text-[11px] pt-1">
-                <span className="text-emerald-400 font-bold">Compresión Binaria: 97.0%</span>
+                <span className="text-emerald-400 font-semibold">Compresión Binaria: 97.0%</span>
                 <span className="text-slate-400">73 bytes / frame</span>
               </div>
             </div>
@@ -245,14 +254,14 @@ export const DefensePanel: React.FC = () => {
             <button
               onClick={handleBroadcastCoT}
               disabled={isBroadcasting}
-              className="w-full py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-extrabold text-xs rounded-xl transition shadow-md flex items-center justify-center space-x-1.5"
+              className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-medium text-xs rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isBroadcasting ? 'TRANSMITIENDO A ATAK...' : 'BROADCAST CoT AHORA (UDP)'}</span>
             </button>
 
             {broadcastMsg && (
-              <div className="mt-2 text-center text-xs text-emerald-300 bg-emerald-950/80 border border-emerald-700 py-1 px-2 rounded-lg">
+              <div className="mt-2 text-center text-xs text-emerald-300 bg-emerald-500/10 ring-1 ring-emerald-500/30 py-1.5 px-3 rounded-xl animate-fadeIn">
                 ✓ {broadcastMsg}
               </div>
             )}

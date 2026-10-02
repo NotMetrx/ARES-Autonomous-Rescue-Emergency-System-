@@ -250,121 +250,120 @@ export const TacticalAICopilot: React.FC = () => {
       replyText = `Comando interpretado: "${text}". Ejecutando protocolo de patrullaje táctico autónomo.`;
     }
 
-    // Voice response & audio cue
-    tacticalAudio.playLockOn();
-    tacticalVoice.speak(replyText, 'copilot', true);
-
-    const copilotMsg: ChatMessage = {
-      id: `copilot-${Date.now()}`,
-      sender: 'copilot',
-      text: replyText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      actionTaken,
-    };
-
-    setMessages(prev => [...prev, copilotMsg]);
+    setTimeout(() => {
+      const replyMsg: ChatMessage = {
+        id: `copilot-${Date.now()}`,
+        sender: 'copilot',
+        text: replyText,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        actionTaken,
+      };
+      setMessages(prev => [...prev, replyMsg]);
+      tacticalVoice.speak(replyText, 'copilot', true);
+    }, 400);
   };
 
   if (!copilotOpen) return null;
 
   return (
-    <div className="fixed bottom-16 right-4 sm:right-6 z-50 w-96 max-w-[calc(100vw-2rem)] bg-[#0b1220]/95 backdrop-blur-xl border border-cyan-500/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slideUp select-none">
-      {/* Copilot Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 px-4 py-3 border-b border-cyan-500/30 flex items-center justify-between">
+    <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] h-[560px] backdrop-blur-2xl bg-slate-900/85 ring-1 ring-white/15 rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden z-50 animate-slideUp font-sans select-none">
+      {/* Top Accent Gradient Line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 opacity-70" />
+
+      {/* Header */}
+      <div className="px-4 py-3.5 border-b border-white/[0.08] flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
-            <Bot className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <Bot className="w-4.5 h-4.5" />
           </div>
           <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-extrabold text-xs tracking-wider text-cyan-300">COPILOTO IA</span>
-              <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600">
-                VOZ ACTIVA
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400">BIOSCAOUT Tactical Swarm Intelligence</p>
+            <h3 className="font-semibold text-sm text-white flex items-center space-x-1.5">
+              <span>Copiloto Táctico IA</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            </h3>
+            <span className="text-[10px] text-slate-400 font-mono">Control por Voz y Órdenes NLU</span>
           </div>
         </div>
 
         <button
-          onClick={() => { tacticalAudio.playButtonBeep(); toggleCopilot(); }}
-          className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
+          onClick={toggleCopilot}
+          className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Chat Messages Log */}
-      <div className="p-3.5 flex-1 overflow-y-auto max-h-72 space-y-2.5 text-xs font-sans">
+      {/* Messages Scroll Area */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-3">
         {messages.map((m) => (
           <div
             key={m.id}
             className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
           >
             <div
-              className={`max-w-[85%] px-3 py-2 rounded-xl text-[11px] leading-relaxed shadow-md ${
+              className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed shadow-sm ${
                 m.sender === 'user'
-                  ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white rounded-br-none'
-                  : 'bg-slate-900/90 text-slate-200 border border-slate-700/80 rounded-bl-none'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-br-sm'
+                  : 'backdrop-blur-md bg-white/[0.04] ring-1 ring-white/[0.08] text-slate-200 rounded-bl-sm'
               }`}
             >
               {m.text}
 
               {m.actionTaken && (
-                <div className="mt-1.5 pt-1.5 border-t border-slate-700/50 flex items-center text-[10px] text-emerald-400 font-bold font-mono">
+                <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center text-[10px] text-emerald-400 font-semibold font-mono">
                   <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-400" />
                   <span>EJECUTADO: {m.actionTaken}</span>
                 </div>
               )}
             </div>
-            <span className="text-[9px] text-slate-500 mt-0.5 px-1 font-mono">{m.timestamp}</span>
+            <span className="text-[9px] text-slate-500 mt-1 px-1 font-mono">{m.timestamp}</span>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Action Chips */}
-      <div className="px-3 py-1.5 bg-slate-950/70 border-t border-slate-800/80 flex items-center space-x-1.5 overflow-x-auto no-scrollbar text-[10px] font-mono">
+      {/* Quick Action Chips - iOS Style Pill Bar */}
+      <div className="px-3 py-2 bg-black/30 border-t border-white/[0.06] flex items-center space-x-1.5 overflow-x-auto no-scrollbar text-[10px] font-mono">
         <button
           onClick={() => executeCommand('Formación Delta')}
-          className="px-2 py-1 bg-slate-900 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-500 text-cyan-300 rounded-lg shrink-0 transition"
+          className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.08] text-cyan-300 rounded-lg shrink-0 transition hover:scale-105 active:scale-95"
         >
           ▲ Formación Delta
         </button>
         <button
           onClick={() => executeCommand('Formación Línea')}
-          className="px-2 py-1 bg-slate-900 hover:bg-cyan-950 border border-slate-700 hover:border-cyan-500 text-cyan-300 rounded-lg shrink-0 transition"
+          className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.08] text-cyan-300 rounded-lg shrink-0 transition hover:scale-105 active:scale-95"
         >
           ━ Línea en Frente
         </button>
         <button
           onClick={() => executeCommand('Cámara Térmica FLIR')}
-          className="px-2 py-1 bg-slate-900 hover:bg-amber-950 border border-slate-700 hover:border-amber-500 text-amber-300 rounded-lg shrink-0 transition"
+          className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.08] text-amber-300 rounded-lg shrink-0 transition hover:scale-105 active:scale-95"
         >
           🔥 FLIR Térmico
         </button>
         <button
           onClick={() => executeCommand('Capturar Snapshot')}
-          className="px-2 py-1 bg-slate-900 hover:bg-rose-950 border border-slate-700 hover:border-rose-500 text-rose-300 rounded-lg shrink-0 transition"
+          className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.08] text-rose-300 rounded-lg shrink-0 transition hover:scale-105 active:scale-95"
         >
           📸 Snapshot
         </button>
         <button
           onClick={() => executeCommand('Retorno a Base RTH')}
-          className="px-2 py-1 bg-slate-900 hover:bg-rose-950 border border-slate-700 hover:border-rose-500 text-rose-300 rounded-lg shrink-0 transition"
+          className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.08] text-rose-300 rounded-lg shrink-0 transition hover:scale-105 active:scale-95"
         >
           🏠 RTH Flota
         </button>
       </div>
 
       {/* Input Box & Voice Button */}
-      <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center space-x-2">
+      <div className="p-3 bg-black/40 border-t border-white/[0.08] flex items-center space-x-2">
         <button
           onClick={toggleListening}
-          className={`p-2 rounded-xl transition shadow-lg ${
+          className={`p-2.5 rounded-xl transition-all duration-200 shadow-md ${
             isListening
-              ? 'bg-rose-600 text-white animate-pulse ring-2 ring-rose-400'
-              : 'bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700'
+              ? 'bg-rose-600 text-white animate-pulse ring-2 ring-rose-400/50 scale-105'
+              : 'bg-white/[0.05] hover:bg-white/[0.1] text-cyan-400 ring-1 ring-white/10 hover:scale-105'
           }`}
           title={isListening ? 'Escuchando... Haz click para detener' : 'Hablar por micrófono con el Copiloto IA'}
         >
@@ -381,13 +380,13 @@ export const TacticalAICopilot: React.FC = () => {
             }
           }}
           placeholder={isListening ? 'Escuchando tu voz...' : 'Escribe una orden operacional...'}
-          className="flex-1 bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none"
+          className="flex-1 bg-white/[0.04] border border-white/10 focus:border-cyan-400/50 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 outline-none"
         />
 
         <button
           onClick={() => executeCommand(inputVal)}
           disabled={!inputVal.trim()}
-          className="p-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white rounded-xl transition shadow-md"
+          className="p-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-30 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-blue-500/20"
         >
           <Send className="w-4 h-4" />
         </button>
