@@ -51,6 +51,9 @@ coverage.xml
 *.db-wal
 *.db-shm
 *.wal
+*.db
+data/snapshots/
+data/*.db
 ares.db*
 test_ares.db*
 
@@ -63,6 +66,7 @@ test_ares.db*
 .DS_Store
 Thumbs.db
 desktop.ini
+Captura*.png
 
 # Large neural weights & checkpoints (allow tracked weights)
 *.onnx
