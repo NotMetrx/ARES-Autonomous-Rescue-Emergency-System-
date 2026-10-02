@@ -200,47 +200,44 @@ def test_defense_rest_api():
     print("\n" + "=" * 60)
     print("[TEST 6] Testing Defense & ATAK REST API Endpoints...")
     print("=" * 60)
-    import urllib.request
-    import json
+    from starlette.testclient import TestClient
+    from proyectocompe.main import app
 
-    base_url = "http://127.0.0.1:8000"
+    client = TestClient(app)
 
     # 1. Anti-jamming status
-    with urllib.request.urlopen(f"{base_url}/api/v1/defense/anti-jamming/status") as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert "ew_environment" in data
-        print(f" -> /defense/anti-jamming/status: {data['ew_environment']}")
+    resp = client.get("/api/v1/defense/anti-jamming/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "ew_environment" in data
+    print(f" -> /defense/anti-jamming/status: {data['ew_environment']}")
 
     # 2. Ambient wind
-    payload = json.dumps({"speed_ms": 5.4, "direction_deg": 90.0}).encode("utf-8")
-    req = urllib.request.Request(f"{base_url}/api/v1/defense/aerodynamics/wind", data=payload, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["wind"]["speed_ms"] == 5.4
-        print(f" -> /defense/aerodynamics/wind POST: updated to {data['wind']['speed_ms']} m/s")
+    resp = client.post("/api/v1/defense/aerodynamics/wind", json={"speed_ms": 5.4, "direction_deg": 90.0})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["wind"]["speed_ms"] == 5.4
+    print(f" -> /defense/aerodynamics/wind POST: updated to {data['wind']['speed_ms']} m/s")
 
     # 3. PNR status for all drones
-    with urllib.request.urlopen(f"{base_url}/api/v1/defense/aerodynamics/pnr-status") as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        print(f" -> /defense/aerodynamics/pnr-status: Evaluated {len(data)} active drones")
+    resp = client.get("/api/v1/defense/aerodynamics/pnr-status")
+    assert resp.status_code == 200
+    data = resp.json()
+    print(f" -> /defense/aerodynamics/pnr-status: Evaluated {len(data)} active drones")
 
     # 4. ATAK CoT broadcast
-    req = urllib.request.Request(f"{base_url}/api/v1/defense/cot/broadcast-now", data=b"{}", headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["status"] == "BROADCAST_COMPLETED"
-        print(f" -> /defense/cot/broadcast-now: Broadcast {data['events_transmitted']} events to ATAK network")
+    resp = client.post("/api/v1/defense/cot/broadcast-now", json={})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "BROADCAST_COMPLETED"
+    print(f" -> /defense/cot/broadcast-now: Broadcast {data['events_transmitted']} events to ATAK network")
 
     # 5. RF Link Budget
-    with urllib.request.urlopen(f"{base_url}/api/v1/defense/rf-link/budget?distance_m=2000&frequency_mhz=915") as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["bandwidth_savings_pct"] > 96.0
-        print(f" -> /defense/rf-link/budget: Verified {data['bandwidth_savings_pct']}% compression over radio")
+    resp = client.get("/api/v1/defense/rf-link/budget?distance_m=2000&frequency_mhz=915")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["bandwidth_savings_pct"] > 96.0
+    print(f" -> /defense/rf-link/budget: Verified {data['bandwidth_savings_pct']}% compression over radio")
 
 def main():
     test_aerodynamics_and_pnr()

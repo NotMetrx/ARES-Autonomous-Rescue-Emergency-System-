@@ -33,6 +33,8 @@ class TargetDetectionCreate(BaseModel):
     custom_lon: Optional[float] = Field(default=None, description="Optional override if already geo-calculated by edge device")
     snapshot_base64: Optional[str] = Field(default=None, description="Base64 encoded JPEG thumbnail of target")
 
+from pydantic import BaseModel, Field, computed_field
+
 class TargetDetection(BaseModel):
     detection_id: str
     reported_at: float
@@ -58,6 +60,26 @@ class TargetDetection(BaseModel):
     velocity_x: float = 0.0
     velocity_y: float = 0.0
     estimated_speed_kmh: float = 0.0
+
+    @computed_field
+    @property
+    def lat(self) -> float:
+        return self.estimated_lat
+
+    @computed_field
+    @property
+    def lon(self) -> float:
+        return self.estimated_lon
+
+    @computed_field
+    @property
+    def alt(self) -> float:
+        return self.estimated_alt
+
+    @computed_field
+    @property
+    def timestamp(self) -> float:
+        return self.reported_at
 
 class DetectionAlertPayload(BaseModel):
     event: str = "TARGET_ACQUIRED"

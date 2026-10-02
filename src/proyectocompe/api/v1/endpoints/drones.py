@@ -22,12 +22,29 @@ async def get_drone_status(drone_id: str):
 @router.post("/command")
 async def send_fleet_command(cmd_req: DroneCommandRequest):
     """
-    Broadcast tactical command to all active drones in the swarm:
+    Broadcast tactical command to all active drones in the swarm or a specific drone:
     - TAKEOFF
     - LAND
     - RTH
     - EMERGENCY_STOP
+    - GOTO / HOLD
     """
+    if cmd_req.drone_id:
+        success, msg = fsm_service.handle_command(cmd_req.drone_id, cmd_req.command)
+        if success:
+            drone_updated = fsm_service.get_drone(cmd_req.drone_id)
+            if drone_updated:
+                swarm_simulator.set_drone_command(cmd_req.drone_id, drone_updated.fsm_state)
+            return {
+                "status": "COMPLETED",
+                "command": cmd_req.command.value,
+                "drone_id": cmd_req.drone_id,
+                "results": [{"drone_id": cmd_req.drone_id, "status": "SUCCESS", "detail": msg}],
+                "message": f"Comando {cmd_req.command.value} ejecutado en {cmd_req.drone_id}."
+            }
+        else:
+            raise HTTPException(status_code=400, detail=msg)
+
     results = []
     for d in fsm_service.get_all_drones():
         success, msg = fsm_service.handle_command(d.drone_id, cmd_req.command)

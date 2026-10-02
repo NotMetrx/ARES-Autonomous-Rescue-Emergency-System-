@@ -23,9 +23,13 @@ async def get_recorder_status():
     }
 
 @router.post("/start")
-async def start_recording(req: StartRecordingRequest):
+async def start_recording(
+    session_name: Optional[str] = Query(default=None),
+    req: Optional[StartRecordingRequest] = None
+):
     """Starts recording swarm telemetry to a .jsonl flight record."""
-    session_id = flight_recorder.start_recording(req.session_name)
+    name = session_name or (req.session_name if req else "tactical_sweep")
+    session_id = flight_recorder.start_recording(name)
     return {"status": "RECORDING_STARTED", "session_id": session_id}
 
 @router.post("/stop")
@@ -41,14 +45,30 @@ async def list_recorded_sessions():
 
 @router.post("/replay/start")
 async def start_replay(
-    session_id: str,
-    speed: float = Query(default=1.0, ge=0.2, le=5.0, description="Playback speed multiplier (0.5x, 1x, 2x, 5x)")
+    session_id: Optional[str] = Query(default=None),
+    session_name: Optional[str] = Query(default=None),
+    speed: Optional[float] = Query(default=None),
+    speed_mult: Optional[float] = Query(default=None)
 ):
     """Starts replaying a recorded flight session through the live WebSocket stream."""
-    success = await replay_engine.start_replay(session_id, speed)
+    sid = session_name or session_id
+    if not sid:
+        raise HTTPException(status_code=400, detail="session_id or session_name is required")
+    s = speed_mult if speed_mult is not None else (speed if speed is not None else 1.0)
+    success = await replay_engine.start_replay(sid, s)
     if not success:
-        raise HTTPException(status_code=404, detail=f"Flight session {session_id} not found")
-    return {"status": "REPLAY_STARTED", "session_id": session_id, "speed": speed}
+        raise HTTPException(status_code=404, detail=f"Flight session {sid} not found")
+    return {"status": "REPLAY_STARTED", "session_id": sid, "speed": s}
+
+@router.post("/replay/speed")
+async def set_replay_speed(
+    speed_mult: Optional[float] = Query(default=None),
+    speed: Optional[float] = Query(default=None)
+):
+    """Dynamically adjust playback speed during telemetry replay."""
+    s = speed_mult if speed_mult is not None else (speed if speed is not None else 1.0)
+    replay_engine.speed_multiplier = max(0.2, min(10.0, float(s)))
+    return {"status": "SPEED_UPDATED", "speed": replay_engine.speed_multiplier}
 
 @router.post("/replay/stop")
 async def stop_replay():

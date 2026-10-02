@@ -27,10 +27,10 @@ export const FleetCards: React.FC = () => {
   const handleDroneCommand = async (droneId: string, cmd: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await fetch('/api/v1/drones/command', {
+      await fetch(`/api/v1/drones/${droneId}/command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ drone_id: droneId, command: cmd }),
+        body: JSON.stringify({ command: cmd }),
       });
       tacticalVoice.speak(`Comando ${cmd} enviado a ${droneId}`, 'cmd');
     } catch (err) {

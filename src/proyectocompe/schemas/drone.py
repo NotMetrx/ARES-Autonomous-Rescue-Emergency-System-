@@ -23,6 +23,7 @@ class DroneCommandType(str, Enum):
 
 class DroneCommandRequest(BaseModel):
     command: DroneCommandType
+    drone_id: Optional[str] = None
     target_lat: Optional[float] = None
     target_lon: Optional[float] = None
     target_alt: Optional[float] = None

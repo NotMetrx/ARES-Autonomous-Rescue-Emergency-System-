@@ -40,7 +40,14 @@ export function useSwarmWebSocket() {
           setCoverage(covRes.value.coverage_pct, covRes.value.covered_area_m2);
         }
         if (detRes.status === 'fulfilled' && Array.isArray(detRes.value)) {
-          setDetections(detRes.value);
+          const normalized = detRes.value.map((d: any) => ({
+            ...d,
+            lat: d.lat ?? d.estimated_lat ?? 0,
+            lon: d.lon ?? d.estimated_lon ?? 0,
+            alt: d.alt ?? d.estimated_alt ?? 0,
+            timestamp: d.timestamp ?? d.reported_at ?? Date.now(),
+          }));
+          setDetections(normalized);
         }
       } catch (err) {
         console.warn('Initial REST data load error:', err);

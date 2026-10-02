@@ -7,11 +7,13 @@ from proyectocompe.services.geofence_service import geofence_service
 router = APIRouter()
 
 @router.get("", response_model=List[Geofence])
+@router.get("/", response_model=List[Geofence])
 async def list_geofences():
     """Retrieve all active operational boundaries and No-Fly Zones (NFZ)."""
     return geofence_service.get_all_geofences()
 
 @router.post("", response_model=Geofence)
+@router.post("/", response_model=Geofence)
 async def create_geofence(fence_in: GeofenceCreate):
     """Create a new Keep-In or Keep-Out tactical geofence."""
     return geofence_service.create_geofence(fence_in)

@@ -31,18 +31,28 @@ async def get_anti_jamming_status():
     return anti_jamming_service.get_fleet_ew_status()
 
 @router.post("/anti-jamming/simulate-attack")
-async def simulate_ew_attack(req: EWAttackRequest):
+async def simulate_ew_attack(
+    attack_type: Optional[str] = Query(default=None),
+    drone_id: Optional[str] = Query(default=None),
+    req: Optional[EWAttackRequest] = None
+):
     """Simulates an active electronic warfare attack (Jamming or Spoofing) on a UAV."""
-    return anti_jamming_service.simulate_attack(req.drone_id, req.attack_type)
+    d_id = drone_id or (req.drone_id if req else "ARES-01")
+    a_type = attack_type or (req.attack_type if req else "RF_JAMMING")
+    return anti_jamming_service.simulate_attack(d_id, a_type)
 
 @router.post("/anti-jamming/clear-attack")
-async def clear_ew_attack(req: ClearAttackRequest):
+async def clear_ew_attack(
+    drone_id: Optional[str] = Query(default=None),
+    req: Optional[ClearAttackRequest] = None
+):
     """Clears active electronic warfare interference and restores GPS locks."""
-    res = anti_jamming_service.clear_attack(req.drone_id)
+    d_id = drone_id or (req.drone_id if req else "ARES-01")
+    res = anti_jamming_service.clear_attack(d_id)
     # Restore drone state in simulator
-    if req.drone_id in swarm_simulator.agents:
+    if d_id in swarm_simulator.agents:
         from proyectocompe.schemas.drone import DroneFSMState
-        swarm_simulator.agents[req.drone_id]["fsm"] = DroneFSMState.IN_FLIGHT
+        swarm_simulator.agents[d_id]["fsm"] = DroneFSMState.IN_FLIGHT
     return res
 
 # --- Aerodynamics & Point of No Return (PNR) Endpoints ---
@@ -53,9 +63,15 @@ async def get_wind_estimate():
     return aerodynamics_service.get_current_wind()
 
 @router.post("/aerodynamics/wind")
-async def set_ambient_wind(req: WindUpdateRequest):
+async def set_ambient_wind(
+    speed_ms: Optional[float] = Query(default=None),
+    direction_deg: Optional[float] = Query(default=None),
+    req: Optional[WindUpdateRequest] = None
+):
     """Overrides ambient wind speed and direction for meteorological simulation."""
-    aerodynamics_service.set_ambient_wind(req.speed_ms, req.direction_deg)
+    s = speed_ms if speed_ms is not None else (req.speed_ms if req else 6.5)
+    d = direction_deg if direction_deg is not None else (req.direction_deg if req else 180.0)
+    aerodynamics_service.set_ambient_wind(s, d)
     return {
         "status": "UPDATED",
         "wind": aerodynamics_service.get_current_wind()

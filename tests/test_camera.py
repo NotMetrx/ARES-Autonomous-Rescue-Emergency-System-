@@ -58,99 +58,84 @@ def test_camera_rest_endpoints():
     print("[TEST 2] Testing Camera REST API Endpoints...")
     print("=" * 60)
 
-    base = "http://127.0.0.1:8000"
+    from starlette.testclient import TestClient
+    from proyectocompe.main import app
+
+    client = TestClient(app)
 
     # Frame
-    with urllib.request.urlopen(f"{base}/api/v1/camera/ARES-01/frame") as resp:
-        assert resp.status == 200
-        assert resp.headers.get("Content-Type") == "image/jpeg"
-        print(" -> GET /camera/ARES-01/frame: 200 OK image/jpeg")
+    resp = client.get("/api/v1/camera/ARES-01/frame")
+    assert resp.status_code == 200
+    assert "image/jpeg" in resp.headers.get("content-type", "")
+    print(" -> GET /camera/ARES-01/frame: 200 OK image/jpeg")
 
     # Mode
-    req = urllib.request.Request(
-        f"{base}/api/v1/camera/ARES-01/mode",
-        data=json.dumps({"mode": "RGB"}).encode(),
-        headers={"Content-Type": "application/json"}
-    )
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["mode"] == "RGB"
-        print(" -> POST /camera/ARES-01/mode: switched to RGB")
+    resp = client.post("/api/v1/camera/ARES-01/mode?mode=RGB")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["mode"] == "RGB"
+    print(" -> POST /camera/ARES-01/mode: switched to RGB")
 
     # PTZ Gimbal Control
-    req = urllib.request.Request(
-        f"{base}/api/v1/camera/ARES-01/gimbal",
-        data=json.dumps({"pitch_deg": -30.0, "yaw_deg": -15.0, "zoom": 1.5}).encode(),
-        headers={"Content-Type": "application/json"}
+    resp = client.post(
+        "/api/v1/camera/ARES-01/gimbal",
+        json={"pitch_deg": -30.0, "yaw_deg": -15.0, "zoom": 1.5}
     )
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["pitch_deg"] == -30.0
-        assert data["yaw_deg"] == -15.0
-        print(f" -> POST /camera/ARES-01/gimbal: Pitch={data['pitch_deg']}°, Yaw={data['yaw_deg']}°")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["pitch_deg"] == -30.0
+    assert data["yaw_deg"] == -15.0
+    print(f" -> POST /camera/ARES-01/gimbal: Pitch={data['pitch_deg']}°, Yaw={data['yaw_deg']}°")
 
     # Gimbal Preset
-    req = urllib.request.Request(
-        f"{base}/api/v1/camera/ARES-01/preset/nadir",
-        data=b"{}",
-        headers={"Content-Type": "application/json"}
-    )
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["pitch_deg"] == -90.0
-        print(f" -> POST /camera/ARES-01/preset/nadir: applied Nadir 90°")
+    resp = client.post("/api/v1/camera/ARES-01/preset/nadir")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["pitch_deg"] == -90.0
+    print(f" -> POST /camera/ARES-01/preset/nadir: applied Nadir 90°")
 
     # Diagnostic Status
-    with urllib.request.urlopen(f"{base}/api/v1/camera/ARES-01/status") as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert "gimbal" in data
-        assert "source" in data
-        print(f" -> GET /camera/ARES-01/status: Source={data['source']}, Gimbal={data['gimbal']}")
+    resp = client.get("/api/v1/camera/ARES-01/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "gimbal" in data
+    assert "source" in data
+    print(f" -> GET /camera/ARES-01/status: Source={data['source']}, Gimbal={data['gimbal']}")
 
     # Snapshot Capture
-    req = urllib.request.Request(
-        f"{base}/api/v1/camera/ARES-01/snapshot",
-        data=b"{}",
-        headers={"Content-Type": "application/json"}
-    )
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["status"] == "SNAPSHOT_CAPTURED"
-        snap_file = os.path.basename(data["filepath"])
-        print(f" -> POST /camera/ARES-01/snapshot: Captured {data['filepath']}")
+    resp = client.post("/api/v1/camera/ARES-01/snapshot")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "SNAPSHOT_CAPTURED"
+    snap_file = os.path.basename(data["filepath"])
+    print(f" -> POST /camera/ARES-01/snapshot: Captured {data['filepath']}")
 
     # Snapshot Catalog List
-    with urllib.request.urlopen(f"{base}/api/v1/camera/snapshots") as resp:
-        assert resp.status == 200
-        snaps = json.loads(resp.read().decode())
-        assert len(snaps) > 0
-        print(f" -> GET /camera/snapshots: Found {len(snaps)} archived snapshots")
+    resp = client.get("/api/v1/camera/snapshots")
+    assert resp.status_code == 200
+    snaps = resp.json()
+    assert len(snaps) > 0
+    print(f" -> GET /camera/snapshots: Found {len(snaps)} archived snapshots")
 
     # Snapshot File Retrieval
-    with urllib.request.urlopen(f"{base}/api/v1/camera/snapshots/{snap_file}") as resp:
-        assert resp.status == 200
-        assert resp.headers.get("Content-Type") in ["image/jpeg", "image/png"]
-        content = resp.read()
-        assert len(content) > 5000
-        print(f" -> GET /camera/snapshots/{snap_file}: 200 OK ({len(content)} bytes)")
+    resp = client.get(f"/api/v1/camera/snapshots/{snap_file}")
+    assert resp.status_code == 200
+    assert any(t in resp.headers.get("content-type", "") for t in ["image/jpeg", "image/png"])
+    assert len(resp.content) > 5000
+    print(f" -> GET /camera/snapshots/{snap_file}: 200 OK ({len(resp.content)} bytes)")
 
     # External Companion Feed Ingestion (Jetson Simulation)
     fake_frame = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xdb" + b"\x00" * 2000
-    req = urllib.request.Request(
-        f"{base}/api/v1/camera/ARES-02/feed",
-        data=fake_frame,
+    resp = client.post(
+        "/api/v1/camera/ARES-02/feed",
+        content=fake_frame,
         headers={"Content-Type": "image/jpeg"}
     )
-    with urllib.request.urlopen(req) as resp:
-        assert resp.status == 200
-        data = json.loads(resp.read().decode())
-        assert data["status"] == "FRAME_INGESTED"
-        print(f" -> POST /camera/ARES-02/feed: Ingested companion frame ({data['size']} bytes)")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "FRAME_INGESTED"
+    print(f" -> POST /camera/ARES-02/feed: Ingested companion frame ({data['size']} bytes)")
+
 
 def test_aar_report_with_embedded_evidence():
     print("\n" + "=" * 60)

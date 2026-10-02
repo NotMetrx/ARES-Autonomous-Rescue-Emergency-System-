@@ -71,10 +71,17 @@ async def get_drone_camera_status(drone_id: str):
     """Returns camera diagnostic status, gimbal position, and AI companion feed status."""
     return camera_service.get_camera_status(drone_id)
 
+from typing import Optional
+
 @router.post("/{drone_id}/mode")
-async def set_drone_camera_mode(drone_id: str, req: CameraModeRequest):
+async def set_drone_camera_mode(
+    drone_id: str,
+    mode: Optional[str] = None,
+    req: Optional[CameraModeRequest] = None
+):
     """Switches drone camera sensor mode between RGB and THERMAL_FLIR."""
-    return camera_service.set_camera_mode(drone_id, req.mode)
+    selected_mode = mode or (req.mode if req else "RGB")
+    return camera_service.set_camera_mode(drone_id, selected_mode)
 
 @router.get("/{drone_id}/gimbal")
 async def get_drone_gimbal(drone_id: str):

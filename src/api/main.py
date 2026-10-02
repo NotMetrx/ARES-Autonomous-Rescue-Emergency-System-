@@ -427,7 +427,7 @@ DASHBOARD_HTML = '''<!DOCTYPE html>
         <div id="auth-section">
             <h1>ARES // TACTICAL COMMAND CENTER</h1>
             <div class="alert alert-info">
-                Ingrese sus credenciales para acceder al panel de control
+                <span class="badge">SYSTEM READY</span> Modo Edge Computing local activado. Base de Datos: SQLite en modo WAL. Ingrese sus credenciales para acceder al panel de control.
             </div>
             <form id="login-form">
                 <div class="form-group">
@@ -1199,3 +1199,8 @@ DASHBOARD_HTML = '''<!DOCTYPE html>
     </script>
 </body>
 </html>'''
+
+
+@app.get("/", response_class=HTMLResponse)
+async def tactical_dashboard():
+    return HTMLResponse(content=DASHBOARD_HTML)
