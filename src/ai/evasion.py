@@ -81,13 +81,13 @@ class ReactiveEvasionEngine:
         p_o = _v(obstacle.position).reshape(3)
         v_o = _v(obstacle.velocity).reshape(3)
 
-        r0 = p_d - p_o
-        v_rel = v_d - v_o
+        r0 = np.nan_to_num(p_d - p_o, nan=0.0, posinf=0.0, neginf=0.0)
+        v_rel = np.nan_to_num(v_d - v_o, nan=0.0, posinf=0.0, neginf=0.0)
         v_rel_sq = float(np.dot(v_rel, v_rel))
 
         obs_r = getattr(obstacle, "radius_meters", getattr(obstacle, "radius", 4.0))
 
-        if v_rel_sq < 1e-6:
+        if not math.isfinite(v_rel_sq) or v_rel_sq < 1e-6:
             dist = float(np.linalg.norm(r0))
             threat = dist <= (self.safety_bubble + obs_r)
             return threat, 0.0, r0
@@ -120,18 +120,21 @@ class ReactiveEvasionEngine:
         p_o = _v(obstacle.position).reshape(3)
         v_o = _v(obstacle.velocity).reshape(3)
 
-        r0 = p_d - p_o
-        v_rel = v_d - v_o
+        r0 = np.nan_to_num(p_d - p_o, nan=0.0, posinf=0.0, neginf=0.0)
+        v_rel = np.nan_to_num(v_d - v_o, nan=0.0, posinf=0.0, neginf=0.0)
         v_rel_sq = float(np.dot(v_rel, v_rel))
 
-        if v_rel_sq > 1e-6:
+        if math.isfinite(v_rel_sq) and v_rel_sq > 1e-6:
             t_cpa = max(0.1, -float(np.dot(r0, v_rel)) / v_rel_sq)
+            t_cpa = float(np.clip(t_cpa, 0.0, self.threat_horizon_s))
             r_cpa = r0 + v_rel * t_cpa
         else:
             t_cpa = 0.0
             r_cpa = r0
 
         dist_at_cpa = float(np.linalg.norm(r_cpa))
+        if not math.isfinite(dist_at_cpa):
+            dist_at_cpa = 0.0
         obs_r = getattr(obstacle, "radius_meters", getattr(obstacle, "radius", 4.0))
         required_clearance = self.safety_bubble + obs_r + 5.0
 
@@ -192,8 +195,9 @@ class ReactiveEvasionEngine:
 
         # Reactive evasion waypoint shift
         evasion_displacement = repulsion_dir * evasion_magnitude
-        if not np.all(np.isfinite(evasion_displacement)):
-            evasion_displacement = np.zeros(3, dtype=np.float64)
+        evasion_displacement = np.nan_to_num(
+            evasion_displacement, nan=0.0, posinf=0.0, neginf=0.0
+        )
 
         latency_ms = (time.perf_counter() - start_time) * 1000.0
         return evasion_displacement.astype(np.float64), float(latency_ms)
