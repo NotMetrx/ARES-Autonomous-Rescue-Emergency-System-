@@ -27,13 +27,14 @@ export function useSwarmWebSocket() {
     // Fetch initial auxiliary data from backend REST endpoints
     const fetchAuxData = async () => {
       try {
-        const [aiRes, windRes, pnrRes, ewRes, covRes, detRes] = await Promise.allSettled([
+        const [aiRes, windRes, pnrRes, ewRes, covRes, detRes, camRes] = await Promise.allSettled([
           fetch('/api/v1/ai-engine/status').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/defense/aerodynamics/wind').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/defense/aerodynamics/pnr-status').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/defense/anti-jamming/status').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/missions/coverage').then(r => r.ok ? r.json() : null),
           fetch('/api/v1/detections').then(r => r.ok ? r.json() : null),
+          fetch('/api/v1/camera/ARES-01/analytics').then(r => r.ok ? r.json() : null),
         ]);
 
         if (aiRes.status === 'fulfilled' && aiRes.value) setAIStatus(aiRes.value);
@@ -42,6 +43,9 @@ export function useSwarmWebSocket() {
         if (ewRes.status === 'fulfilled' && ewRes.value) setAntiJamming(ewRes.value);
         if (covRes.status === 'fulfilled' && covRes.value) {
           setCoverage(covRes.value.coverage_pct, covRes.value.covered_area_m2);
+        }
+        if (camRes.status === 'fulfilled' && camRes.value) {
+          setSurvivorsInView(camRes.value.survivors_count ?? 0, 0);
         }
         if (detRes.status === 'fulfilled' && Array.isArray(detRes.value)) {
           const normalized = detRes.value.map((d: any) => ({

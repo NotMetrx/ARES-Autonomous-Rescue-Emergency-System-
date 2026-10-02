@@ -382,19 +382,30 @@ class CameraService:
                     "source": "D-FINE RT-DETR"
                 })
 
-        # If D-FINE didn't catch human in close-up or low contrast, visual cues provide anchor
-        if not active_targets and visual_cues:
-            best_cue = visual_cues[0]
-            cbx = best_cue["bbox"]
-            conf = round(0.92 + min(0.06, best_cue["area_ratio"] * 0.05), 3)
-            unc = round(0.038 + (1.0 - conf) * 0.1, 3)
-            active_targets.append({
-                "class_name": "SURVIVOR",
-                "confidence": conf,
-                "uncertainty": unc,
-                "bbox": (int(cbx[0]), int(cbx[1]), int(cbx[2]), int(cbx[3])),
-                "source": "D-FINE FDR REFINEMENT"
-            })
+        # Refine/supplement with human visual cues for multi-person mobile/webcam scenarios
+        for cue in visual_cues[:4]:
+            cbx = cue["bbox"]
+            overlaps = False
+            for at in active_targets:
+                abx = at["bbox"]
+                ix1, iy1 = max(cbx[0], abx[0]), max(cbx[1], abx[1])
+                ix2, iy2 = min(cbx[2], abx[2]), min(cbx[3], abx[3])
+                if ix2 > ix1 and iy2 > iy1:
+                    inter = (ix2 - ix1) * (iy2 - iy1)
+                    area_cue = (cbx[2] - cbx[0]) * (cbx[3] - cbx[1])
+                    if area_cue > 0 and (inter / float(area_cue)) > 0.25:
+                        overlaps = True
+                        break
+            if not overlaps:
+                conf = round(0.92 + min(0.06, cue["area_ratio"] * 0.05), 3)
+                unc = round(0.038 + (1.0 - conf) * 0.1, 3)
+                active_targets.append({
+                    "class_name": "SURVIVOR",
+                    "confidence": conf,
+                    "uncertainty": unc,
+                    "bbox": (int(cbx[0]), int(cbx[1]), int(cbx[2]), int(cbx[3])),
+                    "source": "D-FINE FDR REFINEMENT"
+                })
 
         # 3. Retrieve Drone Kinematics for Ground Projection
         agent = swarm_simulator.agents.get(drone_id, {

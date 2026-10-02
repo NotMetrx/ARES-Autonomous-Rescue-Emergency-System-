@@ -132,7 +132,10 @@ export const CameraView: React.FC = () => {
         const res = await fetch(`/api/v1/camera/${selectedDroneId}/analytics`);
         if (res.ok) {
           const data: CameraAnalytics = await res.json();
-          if (isMounted) setAnalytics(data);
+          if (isMounted) {
+            setAnalytics(data);
+            useSwarmStore.getState().setSurvivorsInView(data.survivors_count ?? 0, 0);
+          }
         }
       } catch (e) {
         // Silently continue

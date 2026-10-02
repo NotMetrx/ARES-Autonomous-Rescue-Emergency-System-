@@ -364,13 +364,20 @@ class SwarmSimulator:
         from proyectocompe.services.camera_service import camera_service
         survivors_in_view = 0
         hazards_in_view = 0
+        any_external = False
         for d_id in self.agents.keys():
             cam = camera_service.cameras.get(d_id)
             if cam:
                 is_ext = bool(cam.last_external_frame and (now - cam.last_external_frame_time < 3.0))
                 if is_ext:
+                    any_external = True
                     survivors_in_view += getattr(cam, "current_survivors_in_view", 0)
                     hazards_in_view += getattr(cam, "current_hazards_in_view", 0)
+
+        if not any_external:
+            # Procedural simulation mode has 1 survivor in view (matching procedural FPV canvas)
+            survivors_in_view = 1
+            hazards_in_view = 0
 
         frame = SwarmTelemetryFrame(
             frame_sequence=self.frame_seq,
