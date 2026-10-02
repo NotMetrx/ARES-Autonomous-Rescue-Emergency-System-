@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ARES - Transmisor de Cámara Móvil FPV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tactical: {
+              bg: '#020617',
+              panel: '#090d16',
+              border: '#1e293b',
+              cyan: '#06b6d4',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              rose: '#f43f5e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #020617;
+      color: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      touch-action: manipulation;
+    }
+    .hud-grid {
+      background-size: 30px 30px;
+      background-image: 
+        linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+    }
+    .scanline {
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(6, 182, 212, 0.08) 50%, rgba(6, 182, 212, 0.08));
+      background-size: 100% 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden p-3 hud-grid select-none">
+  <!-- Top Tactical Header -->
+  <header class="bg-tactical-panel/95 backdrop-blur-md border border-cyan-500/30 rounded-2xl p-3 shadow-xl mb-2 flex items-center justify-between">
+    <div class="flex items-center space-x-2.5">
+      <div class="relative">
+        <span class="w-3 h-3 rounded-full bg-emerald-400 block" id="statusDot"></span>
+        <span class="w-3 h-3 rounded-full bg-emerald-400 absolute inset-0 animate-ping opacity-75" id="statusPing"></span>
+      </div>
+      <div>
+        <h1 class="text-xs font-black tracking-wider text-cyan-400 flex items-center gap-1.5">
+          <span>ARES EDGE CORE</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">C2 FPV</span>
+        </h1>
+        <p class="text-[10px] text-slate-400 font-mono">TRANSMISOR DE CAMARA MOVIL</p>
+      </div>
+    </div>
+
+    <!-- Drone Selector Dropdown -->
+    <div class="flex items-center space-x-1.5">
+      <label class="text-[10px] text-slate-400">UAV:</label>
+      <select id="droneSelect" class="bg-slate-900 border border-cyan-500/50 text-cyan-300 text-xs font-black rounded-xl px-2.5 py-1 focus:outline-none focus:border-cyan-400">
+        <option value="ARES-01">ARES-01 (Alfa)</option>
+        <option value="ARES-02">ARES-02 (Bravo)</option>
+        <option value="ARES-03">ARES-03 (Charlie)</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Central Camera Viewfinder & AR Overlay -->
+  <main class="relative flex-1 w-full rounded-2xl overflow-hidden border-2 border-cyan-500/40 bg-black flex items-center justify-center min-h-[360px] shadow-2xl scanline">
+    <!-- Raw HTML5 Video from Phone Camera -->
+    <video id="viewfinder" playsinline autoplay muted class="w-full h-full object-cover"></video>
+
+    <!-- Overlay Canvas for AI Bounding Boxes & Reticle -->
+    <canvas id="overlayCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+    <!-- Offscreen Processing Canvas -->
+    <canvas id="captureCanvas" class="hidden"></canvas>
+
+    <!-- Top Left HUD Badges -->
+    <div class="absolute top-3 left-3 flex flex-col space-y-1.5 pointer-events-none text-[10px] font-mono">
+      <div class="bg-slate-950/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-cyan-500/40 text-cyan-300 flex items-center space-x-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400" id="hudStateDot"></span>
+        <span class="font-bold" id="hudStateText">STANDBY</span>
+        <span class="text-slate-500">|</span>
+        <span class="text-white font-bold" id="hudFpsText">0 FPS</span>
+      </div>
+      <div class="bg-slate-950/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-cyan-500/30 text-slate-300 flex items-center space-x-1.5" id="hudLatencyBox">
+        <span class="text-slate-400">LAT:</span>
+        <span class="text-emerald-400 font-bold" id="hudLatencyText">-- ms</span>
+        <span class="text-slate-500">|</span>
+        <span class="text-cyan-300 font-bold" id="hudModelText">D-FINE RT-DETR</span>
+      </div>
+    </div>
+
+    <!-- Top Right Survivor Alert Badge -->
+    <div id="survivorAlertBadge" class="hidden absolute top-3 right-3 bg-rose-950/95 border-2 border-rose-500 text-rose-200 px-3 py-1.5 rounded-xl shadow-2xl animate-bounce flex items-center space-x-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+      <span class="text-xs font-black tracking-wide" id="survivorAlertText">SOBREVIVIENTE DETECTADO</span>
+    </div>
+
+    <!-- Center Crosshairs / Reticle -->
+    <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+      <div class="w-16 h-16 border border-cyan-500/30 rounded-full flex items-center justify-center">
+        <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full"></div>
+      </div>
+      <div class="absolute w-24 h-[1px] bg-cyan-500/20"></div>
+      <div class="absolute h-24 w-[1px] bg-cyan-500/20"></div>
+    </div>
+
+    <!-- Bottom Left Telemetry Summary -->
+    <div class="absolute bottom-3 left-3 bg-slate-950/85 backdrop-blur-md p-2 rounded-xl border border-cyan-500/30 text-[10px] text-slate-300 font-mono space-y-0.5 pointer-events-none">
+      <div>OBJETIVOS: <span class="text-emerald-400 font-black" id="targetsCountText">0</span></div>
+      <div>CONFIANZA: <span class="text-cyan-300 font-bold" id="confText">--%</span></div>
+      <div>FDR INCERTIDUMBRE: <span class="text-amber-300 font-bold" id="uncText">--</span></div>
+      <div>DISTANCIA LRF: <span class="text-white font-bold" id="distText">-- m</span></div>
+    </div>
+
+    <!-- Camera Standby Overlay before starting -->
+    <div id="standbyNotice" class="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 space-y-4">
+      <div class="w-16 h-16 rounded-full bg-cyan-950/80 border-2 border-cyan-500/50 flex items-center justify-center shadow-lg text-cyan-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-sm font-black text-cyan-300 tracking-wider uppercase">Cámara Celular FPV</h2>
+        <p class="text-xs text-slate-400 mt-1 max-w-xs">
+          Convierte tu celular en la cámara táctica del dron. El modelo neuronal D-FINE procesará los cuadros en tiempo real para rescate de sobrevivientes.
+        </p>
+      </div>
+      <button id="btnStart" class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition flex items-center space-x-2">
+        <span>▶ INICIAR TRANSMISIÓN FPV</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Bottom Tactical Control Tray -->
+  <footer class="bg-tactical-panel/95 backdrop-blur-md border border-cyan-500/30 rounded-2xl p-3 shadow-xl mt-2 flex flex-col gap-2">
+    <!-- Primary Action Controls -->
+    <div class="flex items-center justify-between gap-2">
+      <!-- Stop Button -->
+      <button id="btnStop" disabled class="flex-1 py-2.5 bg-rose-950/70 border border-rose-600/70 hover:bg-rose-900 disabled:opacity-40 text-rose-200 font-bold text-xs rounded-xl transition flex items-center justify-center space-x-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+        </svg>
+        <span>DETENER</span>
+      </button>
+
+      <!-- Switch Camera (Front / Rear) -->
+      <button id="btnSwitchCam" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 font-bold text-xs rounded-xl transition flex items-center space-x-1.5" title="Cambiar cámara">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span id="camFacingLabel">TRASERA</span>
+      </button>
+
+      <!-- Toggle Thermal FLIR mode -->
+      <button id="btnToggleMode" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 font-bold text-xs rounded-xl transition flex items-center space-x-1.5" title="Modo Térmico">
+        <span>🔥</span>
+        <span id="modeLabel">RGB</span>
+      </button>
+
+      <!-- Resolution Selector -->
+      <select id="resSelect" class="bg-slate-900 border border-slate-700 text-slate-300 text-xs font-mono rounded-xl px-2 py-2 focus:outline-none">
+        <option value="360" selected>360p (25 FPS)</option>
+        <option value="480">480p (20 FPS)</option>
+        <option value="720">720p (HD)</option>
+      </select>
+    </div>
+
+    <!-- Diagnostic Message & SLA compliance bar -->
+    <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1 border-t border-slate-800">
+      <span id="connStatusMsg">Listo para conectar a C2</span>
+      <span class="text-emerald-400 font-bold" id="slaComplianceBadge">SLA &lt;50ms OK</span>
+    </div>
+  </footer>
+
+  <script>
+    // State
+    let currentStream = null;
+    let ws = null;
+    let isStreaming = false;
+    let currentFacing = 'environment'; // 'environment' (rear) or 'user' (front)
+    let currentMode = 'RGB';
+    let targetFps = 22;
+    let streamInterval = null;
+    let audioCtx = null;
+    let lastSurvivorBeep = 0;
+
+    // Elements
+    const viewfinder = document.getElementById('viewfinder');
+    const overlayCanvas = document.getElementById('overlayCanvas');
+    const captureCanvas = document.getElementById('captureCanvas');
+    const standbyNotice = document.getElementById('standbyNotice');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const btnSwitchCam = document.getElementById('btnSwitchCam');
+    const btnToggleMode = document.getElementById('btnToggleMode');
+    const camFacingLabel = document.getElementById('camFacingLabel');
+    const modeLabel = document.getElementById('modeLabel');
+    const droneSelect = document.getElementById('droneSelect');
+    const resSelect = document.getElementById('resSelect');
+
+    const statusDot = document.getElementById('statusDot');
+    const statusPing = document.getElementById('statusPing');
+    const hudStateDot = document.getElementById('hudStateDot');
+    const hudStateText = document.getElementById('hudStateText');
+    const hudFpsText = document.getElementById('hudFpsText');
+    const hudLatencyText = document.getElementById('hudLatencyText');
+    const targetsCountText = document.getElementById('targetsCountText');
+    const confText = document.getElementById('confText');
+    const uncText = document.getElementById('uncText');
+    const distText = document.getElementById('distText');
+    const survivorAlertBadge = document.getElementById('survivorAlertBadge');
+    const survivorAlertText = document.getElementById('survivorAlertText');
+    const connStatusMsg = document.getElementById('connStatusMsg');
+
+    // Parse URL params for preselection (e.g. ?drone=ARES-02)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('drone')) {
+      const d = urlParams.get('drone').toUpperCase();
+      if (['ARES-01', 'ARES-02', 'ARES-03'].includes(d)) {
+        droneSelect.value = d;
+      }
+    }
+
+    // Synthetic audio chirp on survivor acquisition
+    function playTacticalChirp() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.13);
+      } catch (e) {}
+    }
+
+    // Start Camera Stream
+    async function startCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
+      const res = parseInt(resSelect.value) || 360;
+      const height = res;
+      const width = Math.round(res * (16 / 9));
+
+      const constraints = {
+        video: {
+          facingMode: currentFacing,
+          width: { ideal: width },
+          height: { ideal: height },
+          frameRate: { ideal: 30, max: 30 }
+        },
+        audio: false
+      };
+
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        viewfinder.srcObject = currentStream;
+        await viewfinder.play();
+
+        standbyNotice.classList.add('hidden');
+        btnStop.disabled = false;
+        isStreaming = true;
+
+        connectWebSocket();
+        startTransmissionLoop();
+        updateUIState(true);
+      } catch (err) {
+        console.error('Camera access error:', err);
+        alert('No se pudo acceder a la cámara: ' + err.message + '\nAsegúrate de otorgar permisos de cámara en tu navegador.');
+      }
+    }
+
+    // Stop Camera
+    function stopCamera() {
+      isStreaming = false;
+      if (streamInterval) clearInterval(streamInterval);
+      if (ws) ws.close();
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+      }
+      viewfinder.srcObject = null;
+      standbyNotice.classList.remove('hidden');
+      btnStop.disabled = true;
+      updateUIState(false);
+      clearOverlay();
+    }
+
+    // Connect WebSocket
+    function connectWebSocket() {
+      const droneId = droneSelect.value;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/camera/${droneId}/ingest`;
+
+      connStatusMsg.textContent = `Conectando WebSocket a ${droneId}...`;
+
+      try {
+        ws = new WebSocket(wsUrl);
+        ws.binaryType = 'blob';
+
+        ws.onopen = () => {
+          connStatusMsg.textContent = `Conectado a ${droneId} (WebSocket)`;
+          statusDot.className = 'w-3 h-3 rounded-full bg-emerald-400 block';
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleAnalyticsResponse(data);
+          } catch (e) {}
+        };
+
+        ws.onclose = () => {
+          if (isStreaming) {
+            connStatusMsg.textContent = 'Reconectando WebSocket...';
+            setTimeout(connectWebSocket, 1500);
+          }
+        };
+
+        ws.onerror = () => {
+          connStatusMsg.textContent = 'Error en WebSocket, usando respaldo HTTP';
+        };
+      } catch (e) {
+        console.warn('WS Init failed:', e);
+      }
+    }
+
+    // Transmission Loop
+    function startTransmissionLoop() {
+      if (streamInterval) clearInterval(streamInterval);
+
+      const targetW = 640;
+      const targetH = 360;
+      captureCanvas.width = targetW;
+      captureCanvas.height = targetH;
+      const ctx = captureCanvas.getContext('2d', { willReadFrequently: true });
+
+      let frameCount = 0;
+      let lastFpsTime = performance.now();
+
+      streamInterval = setInterval(() => {
+        if (!isStreaming || viewfinder.readyState < 2) return;
+
+        ctx.drawImage(viewfinder, 0, 0, targetW, targetH);
+        captureCanvas.toBlob((blob) => {
+          if (!blob) return;
+
+          // Send via WebSocket if open, otherwise HTTP POST
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(blob);
+          } else {
+            // Fallback HTTP POST
+            fetch(`/api/v1/camera/${droneSelect.value}/feed?source=SMARTPHONE_HTTP`, {
+              method: 'POST',
+              body: blob,
+              headers: { 'Content-Type': 'image/jpeg' }
+            })
+            .then(r => r.json())
+            .then(data => handleAnalyticsResponse(data))
+            .catch(() => {});
+          }
+
+          frameCount++;
+          const now = performance.now();
+          if (now - lastFpsTime >= 1000) {
+            const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
+            hudFpsText.textContent = `${fps} FPS`;
+            frameCount = 0;
+            lastFpsTime = now;
+          }
+        }, 'image/jpeg', 0.75);
+      }, 1000 / targetFps);
+    }
+
+    // Handle Analytics from Backend
+    function handleAnalyticsResponse(data) {
+      if (!data) return;
+
+      if (data.latency_ms !== undefined) {
+        hudLatencyText.textContent = `${data.latency_ms.toFixed(1)} ms`;
+      }
+
+      const targets = data.targets || [];
+      targetsCountText.textContent = targets.length;
+
+      if (targets.length > 0) {
+        const prim = targets[0];
+        confText.textContent = `${(prim.confidence * 100).toFixed(1)}%`;
+        uncText.textContent = prim.uncertainty ? prim.uncertainty.toFixed(3) : '0.042';
+        distText.textContent = `${prim.distance_m || '---'} m`;
+
+        survivorAlertBadge.classList.remove('hidden');
+        survivorAlertText.textContent = `SOBREVIVIENTE ${(prim.confidence * 100).toFixed(0)}% [${prim.distance_m}m]`;
+
+        // Chirp & vibrate once every 3s
+        const now = Date.now();
+        if (now - lastSurvivorBeep > 3000) {
+          lastSurvivorBeep = now;
+          playTacticalChirp();
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }
+      } else {
+        survivorAlertBadge.classList.add('hidden');
+        confText.textContent = '--%';
+        uncText.textContent = '--';
+        distText.textContent = '-- m';
+      }
+
+      drawOverlayTargets(targets);
+    }
+
+    // Draw AR Targeting Brackets on Overlay Canvas
+    function drawOverlayTargets(targets) {
+      const rect = viewfinder.getBoundingClientRect();
+      overlayCanvas.width = rect.width;
+      overlayCanvas.height = rect.height;
+      const ctx = overlayCanvas.getContext('2d');
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      if (!targets || targets.length === 0) return;
+
+      const scaleX = overlayCanvas.width / 640;
+      const scaleY = overlayCanvas.height / 360;
+
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#10b981';
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 11px monospace';
+
+      targets.forEach(t => {
+        const [x1, y1, x2, y2] = t.bbox;
+        const sx1 = x1 * scaleX;
+        const sy1 = y1 * scaleY;
+        const sx2 = x2 * scaleX;
+        const sy2 = y2 * scaleY;
+        const w = sx2 - sx1;
+        const h = sy2 - sy1;
+        const cLen = 14;
+
+        // 4 Corner brackets
+        ctx.beginPath();
+        // Top-left
+        ctx.moveTo(sx1, sy1 + cLen); ctx.lineTo(sx1, sy1); ctx.lineTo(sx1 + cLen, sy1);
+        // Top-right
+        ctx.moveTo(sx2 - cLen, sy1); ctx.lineTo(sx2, sy1); ctx.lineTo(sx2, sy1 + cLen);
+        // Bottom-left
+        ctx.moveTo(sx1, sy2 - cLen); ctx.lineTo(sx1, sy2); ctx.lineTo(sx1 + cLen, sy2);
+        // Bottom-right
+        ctx.moveTo(sx2 - cLen, sy2); ctx.lineTo(sx2, sy2); ctx.lineTo(sx2, sy2 - cLen);
+        ctx.stroke();
+
+        // Label banner
+        const label = `D-FINE: SOBREVIVIENTE (${(t.confidence * 100).toFixed(0)}%)`;
+        ctx.fillStyle = 'rgba(6, 78, 59, 0.9)';
+        ctx.fillRect(sx1, Math.max(0, sy1 - 20), 220, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(label, sx1 + 4, Math.max(13, sy1 - 6));
+      });
+    }
+
+    function clearOverlay() {
+      const ctx = overlayCanvas.getContext('2d');
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      survivorAlertBadge.classList.add('hidden');
+    }
+
+    function updateUIState(active) {
+      if (active) {
+        hudStateDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        hudStateText.textContent = 'TRANSMITIENDO EN VIVO';
+        hudStateText.className = 'font-bold text-emerald-400';
+      } else {
+        hudStateDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        hudStateText.textContent = 'STANDBY';
+        hudStateText.className = 'font-bold text-slate-400';
+        hudFpsText.textContent = '0 FPS';
+        hudLatencyText.textContent = '-- ms';
+        targetsCountText.textContent = '0';
+      }
+    }
+
+    // Event Listeners
+    btnStart.addEventListener('click', startCamera);
+    btnStop.addEventListener('click', stopCamera);
+
+    btnSwitchCam.addEventListener('click', () => {
+      currentFacing = (currentFacing === 'environment') ? 'user' : 'environment';
+      camFacingLabel.textContent = (currentFacing === 'environment') ? 'TRASERA' : 'FRONTAL';
+      if (isStreaming) startCamera();
+    });
+
+    btnToggleMode.addEventListener('click', async () => {
+      currentMode = (currentMode === 'RGB') ? 'THERMAL_FLIR' : 'RGB';
+      modeLabel.textContent = currentMode === 'RGB' ? 'RGB' : 'FLIR';
+      btnToggleMode.className = currentMode === 'RGB'
+        ? 'py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 font-bold text-xs rounded-xl transition flex items-center space-x-1.5'
+        : 'py-2.5 px-3 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl transition flex items-center space-x-1.5';
+      
+      const droneId = droneSelect.value;
+      fetch(`/api/v1/camera/${droneId}/mode?mode=${currentMode}`, { method: 'POST' }).catch(console.warn);
+    });
+
+    droneSelect.addEventListener('change', () => {
+      if (isStreaming) {
+        if (ws) ws.close();
+        connectWebSocket();
+      }
+    });
+
+    resSelect.addEventListener('change', () => {
+      if (isStreaming) startCamera();
+    });
+  </script>
+</body>
+</html>

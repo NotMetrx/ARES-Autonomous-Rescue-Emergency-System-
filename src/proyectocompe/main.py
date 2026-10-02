@@ -62,6 +62,15 @@ async def serve_hud():
         return FileResponse(hud_file)
     return HTMLResponse("<h3>HUD not found</h3>", status_code=404)
 
+@app.get("/mobile-cam", response_class=HTMLResponse)
+@app.get("/broadcast", response_class=HTMLResponse)
+async def serve_mobile_cam():
+    """Serves the Tactical Mobile Camera Broadcaster Web App for smartphones & webcams."""
+    cam_file = os.path.join(STATIC_DIR, "mobile_cam.html")
+    if os.path.exists(cam_file):
+        return FileResponse(cam_file)
+    return HTMLResponse("<h3>Mobile Broadcaster UI not found</h3>", status_code=404)
+
 @app.get("/health")
 async def healthcheck():
     return {

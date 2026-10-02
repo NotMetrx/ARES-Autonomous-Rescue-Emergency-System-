@@ -110,10 +110,39 @@ async def capture_drone_snapshot(drone_id: str):
     }
 
 @router.post("/{drone_id}/feed")
-async def ingest_drone_camera_feed(drone_id: str, request: Request):
-    """Allows external Edge AI Jetson/RPi companion to push live camera frames."""
+async def ingest_drone_camera_feed(drone_id: str, request: Request, source: str = "SMARTPHONE_CAM"):
+    """Allows external Edge AI Jetson/RPi companion or mobile phone to push live camera frames."""
     raw_bytes = await request.body()
     if not raw_bytes:
         raise HTTPException(status_code=400, detail="Empty frame body")
-    camera_service.ingest_external_frame(drone_id, raw_bytes)
-    return {"status": "FRAME_INGESTED", "drone_id": drone_id, "size": len(raw_bytes)}
+    res = camera_service.ingest_external_frame(drone_id, raw_bytes, source=source)
+    return res
+
+@router.get("/{drone_id}/analytics")
+async def get_drone_camera_analytics(drone_id: str):
+    """Returns real-time neural inference analytics, FPS, FDR uncertainty, and target telemetry."""
+    return camera_service.get_camera_analytics(drone_id)
+
+@router.post("/{drone_id}/connect-stream")
+async def connect_external_ip_camera(drone_id: str, url: str):
+    """Connects to a remote mobile phone IP Camera stream (DroidCam / IP Webcam)."""
+    return camera_service.connect_ip_stream(drone_id, url)
+
+@router.post("/{drone_id}/disconnect-stream")
+async def disconnect_external_ip_camera(drone_id: str):
+    """Disconnects remote IP Camera stream."""
+    return camera_service.disconnect_ip_stream(drone_id)
+
+@router.get("/{drone_id}/tracking-history")
+async def get_drone_tracking_history(drone_id: str):
+    """Returns persistent object tracking gallery of detected persons with photo crops."""
+    import time
+    cam = camera_service.get_or_create_camera(drone_id)
+    now = time.time()
+    return {
+        "drone_id": drone_id,
+        "tracked_persons": cam.tracked_gallery,
+        "total_tracked": len(cam.tracked_gallery),
+        "active_tracks_count": len([t for t in cam.active_tracks.values() if (now - t.last_seen < 3.0)])
+    }
+

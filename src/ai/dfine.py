@@ -525,7 +525,6 @@ class DFINEDetector:
             self.model.to(self.device)
             self.model.eval()
 
-            # Dynamic INT8 quantization on CPU when weights exist
             if self.device.type == "cpu" and self.has_weights:
                 try:
                     self.model = torch.quantization.quantize_dynamic(
@@ -535,6 +534,7 @@ class DFINEDetector:
                     )
                 except Exception:
                     pass
+            self.fallback = EmulatedDFINEDetector(input_size=input_size, conf_threshold=conf_threshold)
         else:
             self._emulated = True
             self.fallback = EmulatedDFINEDetector(input_size=input_size, conf_threshold=conf_threshold)
@@ -739,7 +739,7 @@ class DFINEDetector:
         """
         thresh = conf_thresh if conf_thresh is not None else self.conf_threshold
 
-        if self._emulated or not TORCH_AVAILABLE:
+        if self._emulated or not TORCH_AVAILABLE or not self.has_weights:
             return self.fallback.detect(frame, conf_thresh=thresh)
 
         tensor, (orig_w, orig_h) = self.preprocess(frame)

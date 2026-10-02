@@ -31,7 +31,8 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
     selectedDroneId, 
     setSelectedDroneId, 
     cameraMode, 
-    setCameraMode 
+    setCameraMode,
+    setViewMode 
   } = useSwarmStore();
 
   const [targetAlt, setTargetAlt] = useState<number>(30);
@@ -209,6 +210,19 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
 
       {/* Main Tactical Action Buttons Palette */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 mb-3.5">
+        {/* 0. Ver Cámara FPV */}
+        <button
+          onClick={() => {
+            setViewMode('camera');
+            triggerFeedback(`Cámara FPV: ${currentDrone.drone_id}`, `Abriendo transmisión de cámara y analíticas para ${currentDrone.drone_id}`);
+          }}
+          className="p-2.5 rounded-xl bg-cyan-950/90 hover:bg-cyan-900 border-2 border-cyan-400 text-cyan-200 font-bold text-xs flex flex-col items-center justify-center space-y-1 transition shadow-lg shadow-cyan-950/60"
+          title="Ver transmisión de cámara en vivo y analíticas D-FINE"
+        >
+          <Camera className="w-5 h-5 text-cyan-300 animate-pulse" />
+          <span className="text-[11px] leading-tight text-center font-black text-cyan-300">VER CÁMARA</span>
+        </button>
+
         {/* 1. GOTO Designation */}
         <button
           onClick={() => setGotoMode(!gotoMode)}

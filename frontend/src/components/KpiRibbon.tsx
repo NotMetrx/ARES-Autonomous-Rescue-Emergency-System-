@@ -4,15 +4,16 @@ import { ShieldCheck, AlertTriangle, BatteryMedium, Compass, Target, Radio, Plan
 import { tacticalVoice } from '../services/tacticalVoice';
 
 export const KpiRibbon: React.FC = () => {
-  const { drones, alerts, coveragePct, coveredAreaM2, detections } = useSwarmStore();
+  const { drones, alerts, coveragePct, coveredAreaM2, survivorsInView, hazardsInView } = useSwarmStore();
 
   const activeCount = drones.length;
   const avgBattery = activeCount > 0 
     ? (drones.reduce((sum, d) => sum + d.battery, 0) / activeCount).toFixed(1)
     : '0';
 
-  const survivorsCount = detections.filter(d => d.target_class === 'SURVIVOR').length;
-  const hazardsCount = detections.filter(d => d.target_class === 'FIRE_HAZARD' || d.target_class === 'OBSTACLE').length;
+  // Real-time in-view vision detections (non-cumulative: counts real persons in current frame)
+  const survivorsCount = survivorsInView;
+  const hazardsCount = hazardsInView;
 
   const isSafetyBreached = drones.some(d => d.in_safety_breach || (d.nearest_distance_m !== null && (d.nearest_distance_m ?? 999) < 15.0));
 
@@ -73,14 +74,18 @@ export const KpiRibbon: React.FC = () => {
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Detecciones IA</span>
           <div className="flex items-baseline space-x-2 mt-0.5">
-            <span className="text-xl font-black text-emerald-400">{survivorsCount}</span>
+            <span className={`text-xl font-black ${survivorsCount > 0 ? 'text-emerald-400 animate-pulse' : 'text-slate-400'}`}>
+              {survivorsCount}
+            </span>
             <span className="text-xs text-slate-400 font-medium">víctimas</span>
             <span className="text-sm font-black text-amber-400">{hazardsCount}</span>
             <span className="text-xs text-slate-400 font-medium">fuego</span>
           </div>
-          <span className="text-[10px] text-cyan-400 font-medium">D-FINE (RT-DETR) Edge AI</span>
+          <span className="text-[10px] text-cyan-400 font-medium">
+            {survivorsCount > 0 ? '● En Tiempo Real (En Toma)' : 'D-FINE (RT-DETR) Escaneando'}
+          </span>
         </div>
-        <Target className="w-6 h-6 text-indigo-500/40" />
+        <Target className={`w-6 h-6 ${survivorsCount > 0 ? 'text-emerald-400' : 'text-indigo-500/40'}`} />
       </div>
 
       {/* 5. Burbuja de Seguridad Táctica */}

@@ -33,6 +33,8 @@ interface SwarmStoreState {
   antiJamming: AntiJammingStatus | null;
   coveragePct: number;
   coveredAreaM2: number;
+  survivorsInView: number;
+  hazardsInView: number;
   detections: TargetDetection[];
   isDrawingMode: boolean;
   drawnPoints: [number, number][];
@@ -48,6 +50,7 @@ interface SwarmStoreState {
   }>;
 
   // Actions
+  setSurvivorsInView: (survivors: number, hazards: number) => void;
   toggleCopilot: () => void;
   dispatchGroundUnit: (unitId: string, targetSurvivorId: string) => void;
   handleTelemetryFrame: (frame: TelemetryFrame) => void;
@@ -114,6 +117,8 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
   },
   coveragePct: 14.5,
   coveredAreaM2: 4500,
+  survivorsInView: 0,
+  hazardsInView: 0,
   detections: [],
   isDrawingMode: false,
   drawnPoints: [],
@@ -137,6 +142,7 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
     },
   ],
 
+  setSurvivorsInView: (survivors, hazards) => set({ survivorsInView: survivors, hazardsInView: hazards }),
   toggleCopilot: () => set((state) => ({ copilotOpen: !state.copilotOpen })),
   dispatchGroundUnit: (unitId, targetSurvivorId) =>
     set((state) => ({
@@ -161,6 +167,8 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
       alerts: frame.active_alerts || [],
       frameSeq: frame.frame_sequence,
       wsHz: frame.frequency_hz || 20,
+      survivorsInView: frame.survivors_in_view !== undefined ? frame.survivors_in_view : get().survivorsInView,
+      hazardsInView: frame.hazards_in_view !== undefined ? frame.hazards_in_view : get().hazardsInView,
     });
   },
 
@@ -217,7 +225,22 @@ export const useSwarmStore = create<SwarmStoreState>((set, get) => ({
   setAntiJamming: (antiJamming) => set({ antiJamming }),
   setCoverage: (coveragePct, coveredAreaM2) => set({ coveragePct, coveredAreaM2 }),
   setDetections: (detections) => set({ detections }),
-  addDetection: (target) => set((state) => ({ detections: [target, ...state.detections] })),
+  addDetection: (target) => set((state) => {
+    const idx = state.detections.findIndex(d => d.detection_id === target.detection_id);
+    if (idx >= 0) {
+      const updated = [...state.detections];
+      updated[idx] = {
+        ...updated[idx],
+        ...target,
+        observation_count: Math.max(updated[idx].observation_count || 1, target.observation_count || 1),
+        snapshot_url: target.snapshot_url || updated[idx].snapshot_url,
+        snapshot_path: target.snapshot_path || updated[idx].snapshot_path,
+        timestamp: target.timestamp || Date.now(),
+      };
+      return { detections: updated };
+    }
+    return { detections: [target, ...state.detections] };
+  }),
   setDrawingMode: (active) => set({ isDrawingMode: active }),
   addDrawnPoint: (pt) => set((state) => ({ drawnPoints: [...state.drawnPoints, pt] })),
   clearDrawnPoints: () => set({ drawnPoints: [] }),

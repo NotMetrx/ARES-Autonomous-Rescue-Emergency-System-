@@ -47,6 +47,8 @@ export interface TelemetryFrame {
   active_drones_count: number;
   drones: DroneTelemetry[];
   active_alerts: TacticalAlert[];
+  survivors_in_view?: number;
+  hazards_in_view?: number;
 }
 
 export interface AIStatus {
@@ -109,6 +111,8 @@ export interface TargetDetection {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   observation_count: number;
   snapshot_path?: string;
+  snapshot_url?: string;
+  track_id?: number | string;
   timestamp: number;
 }
 

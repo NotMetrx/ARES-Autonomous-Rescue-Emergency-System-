@@ -77,3 +77,5 @@ class SwarmTelemetryFrame(BaseModel):
     wind_speed_ms: float = 0.0
     wind_dir_deg: float = 0.0
     ew_threat_level: str = "NOMINAL"
+    survivors_in_view: int = 0
+    hazards_in_view: int = 0

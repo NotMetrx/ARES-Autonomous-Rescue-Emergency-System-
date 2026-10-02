@@ -136,6 +136,21 @@ def test_camera_rest_endpoints():
     assert data["status"] == "FRAME_INGESTED"
     print(f" -> POST /camera/ARES-02/feed: Ingested companion frame ({data['size']} bytes)")
 
+    # Camera Analytics & Tracking History
+    resp = client.get("/api/v1/camera/ARES-02/analytics")
+    assert resp.status_code == 200
+    analytics_data = resp.json()
+    assert "tracked_history" in analytics_data
+    assert "active_tracks_count" in analytics_data
+    print(f" -> GET /camera/ARES-02/analytics: Active tracks={analytics_data['active_tracks_count']}")
+
+    resp = client.get("/api/v1/camera/ARES-02/tracking-history")
+    assert resp.status_code == 200
+    history_data = resp.json()
+    assert "drone_id" in history_data
+    assert "tracked_persons" in history_data
+    print(f" -> GET /camera/ARES-02/tracking-history: {len(history_data['tracked_persons'])} records")
+
 
 def test_aar_report_with_embedded_evidence():
     print("\n" + "=" * 60)

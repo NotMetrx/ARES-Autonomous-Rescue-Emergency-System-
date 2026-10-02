@@ -41,3 +41,35 @@ async def telemetry_binary_websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"Binary WebSocket error: {e}")
         ws_manager.disconnect_binary(websocket)
+
+@ws_router.websocket("/ws/camera/{drone_id}/ingest")
+async def camera_ingest_websocket_endpoint(websocket: WebSocket, drone_id: str):
+    """
+    High-Frequency Ingestion WebSocket for Mobile Smartphone Camera / Local Webcam.
+    Receives raw JPEG frames, processes them with trained D-FINE RT-DETR,
+    and returns real-time JSON analytics (detections, latency, confidence, FDR).
+    """
+    from proyectocompe.services.camera_service import camera_service
+    await websocket.accept()
+    try:
+        while True:
+            message = await websocket.receive()
+            if "bytes" in message and message["bytes"]:
+                frame_bytes = message["bytes"]
+            elif "text" in message and message["text"]:
+                txt = message["text"]
+                if txt.startswith("data:image"):
+                    import base64
+                    base64_data = txt.split(",", 1)[1]
+                    frame_bytes = base64.b64decode(base64_data)
+                else:
+                    continue
+            else:
+                continue
+
+            result = camera_service.process_external_frame(drone_id, frame_bytes, source="SMARTPHONE_WEBSOCKET")
+            await websocket.send_json(result)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.debug(f"Camera ingest WS closed: {e}")

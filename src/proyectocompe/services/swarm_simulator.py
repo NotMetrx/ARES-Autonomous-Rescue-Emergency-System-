@@ -359,6 +359,19 @@ class SwarmSimulator:
 
         self.frame_seq += 1
         cov_stats = coverage_service.get_stats()
+
+        # Real-time in-view vision detections from active cameras (Mobile, DroidCam, Webcam)
+        from proyectocompe.services.camera_service import camera_service
+        survivors_in_view = 0
+        hazards_in_view = 0
+        for d_id in self.agents.keys():
+            cam = camera_service.cameras.get(d_id)
+            if cam:
+                is_ext = bool(cam.last_external_frame and (now - cam.last_external_frame_time < 3.0))
+                if is_ext:
+                    survivors_in_view += getattr(cam, "current_survivors_in_view", 0)
+                    hazards_in_view += getattr(cam, "current_hazards_in_view", 0)
+
         frame = SwarmTelemetryFrame(
             frame_sequence=self.frame_seq,
             timestamp=now,
@@ -372,7 +385,9 @@ class SwarmSimulator:
             covered_area_m2=cov_stats["covered_area_m2"],
             wind_speed_ms=wind.speed_ms,
             wind_dir_deg=wind.direction_deg,
-            ew_threat_level=ew_status["ew_environment"]
+            ew_threat_level=ew_status["ew_environment"],
+            survivors_in_view=survivors_in_view,
+            hazards_in_view=hazards_in_view
         )
 
         # Black Box Recording
