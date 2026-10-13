@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚁 BIOSCAOUT — Bio-Autonomous Swarm Command & Control
+# 🚁 BIOSCOUT — Bio-Autonomous Swarm Command & Control
 ### Plataforma Edge de Gestión y Orquestación Autónoma de Enjambres de Drones SAR en la Hora Dorada (&lt;60 min)
 
 [![Python 3.12](https://img.shields.io/badge/PYTHON-3.12-3776ab?style=for-the-badge&logo=python&logoColor=white)](#)
@@ -11,12 +11,12 @@
 [![ATAK & MAVLink](https://img.shields.io/badge/INTEROPERABLE-ATAK%20%7C%20MAVLINK-f97316?style=for-the-badge)](#)
 
 ```text
-  ██████╗ ██╗ ██████╗ ███████╗ ██████╗ █████╗  ██████╗ ██╗   ██╗████████╗
-  ██╔══██╗██║██╔═══██╗██╔════╝██╔════╝██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝
-  ██████╔╝██║██║   ██║███████╗██║     ███████║██║   ██║██║   ██║   ██║   
-  ██╔══██╗██║██║   ██║╚════██║██║     ██╔══██║██║   ██║██║   ██║   ██║   
-  ██████╔╝██║╚██████╔╝███████║╚██████╗██║  ██║╚██████╔╝╚██████╔╝   ██║   
-  ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝   
+  ██████╗ ██╗ ██████╗ ███████╗ ██████╗ ██████╗ ██╗   ██╗████████╗
+  ██╔══██╗██║██╔═══██╗██╔════╝██╔════╝██╔═══██╗██║   ██║╚══██╔══╝
+  ██████╔╝██║██║   ██║███████╗██║     ██║   ██║██║   ██║   ██║   
+  ██╔══██╗██║██║   ██║╚════██║██║     ██║   ██║██║   ██║   ██║   
+  ██████╔╝██║╚██████╔╝███████║╚██████╗╚██████╔╝╚██████╔╝   ██║   
+  ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   
              BIO-AUTONOMOUS SWARM COMMAND & CONTROL (SAR C2)
 ```
 
@@ -31,7 +31,7 @@
 ---
 
 > [!NOTE]
-> **BIOSCAOUT** es el nuevo nombre del proyecto antes conocido como **ARES (Autonomous Rescue Emergency System)**. Algunos identificadores internos conservan el nombre histórico: paquete Python `proyectocompe`, IDs de dron (`ARES-01`, `ARES-02`, `ARES-03`), misión de ejemplo `ARES-MISSION-01`, contenedores Docker y URL del repositorio.
+> **BIOSCOUT** es el nuevo nombre del proyecto antes conocido como **ARES (Autonomous Rescue Emergency System)**. Algunos identificadores internos conservan el nombre histórico: paquete Python `proyectocompe`, IDs de dron (`ARES-01`, `ARES-02`, `ARES-03`), misión de ejemplo `ARES-MISSION-01`, contenedores Docker y URL del repositorio.
 
 ---
 
@@ -54,7 +54,7 @@ flowchart TD
         EW["Sensor EW / Anti-Jamming GPS + Viento"]
     end
 
-    subgraph CORE ["🧠 Núcleo Táctico BIOSCAOUT (FastAPI + SQLite WAL)"]
+    subgraph CORE ["🧠 Núcleo Táctico BIOSCOUT (FastAPI + SQLite WAL)"]
         FSM["FSM del Enjambre & Auto-Repartición"]
         EVASION["Evasión 3D reactiva (&lt;50ms, CPA 15m)"]
         REC["Caja Negra Forense (Registro y Replay)"]
