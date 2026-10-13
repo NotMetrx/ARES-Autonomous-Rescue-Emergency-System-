@@ -1,7 +1,7 @@
 [project]
 name = "proyectocompe"
 version = "0.1.0"
-description = "Add your description here"
+description = "BIOSCAOUT - Bio-Autonomous Swarm Command & Control: C2 de enjambres de drones para búsqueda y rescate"
 readme = "README.md"
 authors = [
     { name = "jhoaodidier", email = "neymardidierlopezgonzales@gmail.com" }
