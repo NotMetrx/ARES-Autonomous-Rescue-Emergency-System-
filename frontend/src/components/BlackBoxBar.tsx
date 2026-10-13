@@ -90,7 +90,7 @@ export const BlackBoxBar: React.FC = () => {
           <button
             onClick={handleStartReplay}
             disabled={!selectedSession}
-            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-40 text-white font-medium rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-blue-500/20"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-cyan-600 to-orange-600 hover:from-cyan-500 hover:to-orange-500 disabled:opacity-40 text-white font-medium rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-orange-500/20"
           >
             <Play className="w-3.5 h-3.5" />
             <span>REPRODUCIR</span>

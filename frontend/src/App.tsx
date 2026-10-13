@@ -107,7 +107,7 @@ export const App: React.FC = () => {
   }, [selectedDroneId, cameraMode, viewMode, setCameraMode, setSelectedDroneId, setViewMode, toggleVoice]);
 
   return (
-    <div className="min-h-screen p-4 sm:p-5 max-w-[1920px] mx-auto flex flex-col justify-between select-none bg-gradient-to-b from-slate-950 via-[#0a0f1a] to-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden">
+    <div className="min-h-screen p-4 sm:p-5 max-w-[1920px] mx-auto flex flex-col justify-between select-none bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.08),_transparent_45%)] bg-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden">
       <div className="flex flex-col gap-5">
         
         {/* Top Tactical Command Header */}
@@ -210,7 +210,7 @@ export const App: React.FC = () => {
               onClick={() => setActiveTab('missions')}
               className={`flex items-center space-x-2 px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] ${
                 activeTab === 'missions'
-                  ? 'bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-300 shadow-md ring-1 ring-blue-500/50'
+                  ? 'bg-gradient-to-r from-orange-500/20 to-orange-500/20 text-orange-300 shadow-md ring-1 ring-orange-500/50'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
             >
@@ -274,8 +274,8 @@ export const App: React.FC = () => {
       <footer className="mt-auto backdrop-blur-xl bg-white/[0.02] ring-1 ring-white/10 rounded-2xl px-5 py-3 text-xs text-slate-400 flex flex-wrap justify-between items-center gap-4 shadow-xl shadow-black/30 sticky bottom-4 z-50 transition-all duration-300">
         <div className="flex items-center space-x-4">
           <div className="flex items-center text-slate-200 font-semibold tracking-wide">
-            <Radio className="w-4 h-4 mr-2 animate-pulse text-blue-400" />
-            BIOSCAOUT TACTICAL OS v3.0
+            <Radio className="w-4 h-4 mr-2 animate-pulse text-orange-400" />
+            ARES TACTICAL OS v3.0
           </div>
           <div className="flex items-center space-x-1.5">
             <div className="w-2 h-2 rounded-full bg-slate-500" />
@@ -288,8 +288,8 @@ export const App: React.FC = () => {
           </div>
           <div className="w-px h-3 bg-white/10" />
           <div className="flex items-center space-x-1.5">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)] animate-pulse" />
-            <span className="text-indigo-400 font-medium">ATAK CoT 4242</span>
+            <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(99,102,241,0.5)] animate-pulse" />
+            <span className="text-orange-400 font-medium">ATAK CoT 4242</span>
           </div>
         </div>
 
@@ -297,11 +297,11 @@ export const App: React.FC = () => {
           <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-amber-300 font-medium shadow-sm">G</kbd> GOTO</span>
           <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-amber-300 font-medium shadow-sm">R</kbd> RTH</span>
           <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-rose-400 font-medium shadow-sm">ESP</kbd> RTH Total</span>
-          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-blue-300 shadow-sm">1-3</kbd> Dron</span>
-          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-blue-300 shadow-sm">T</kbd> FLIR</span>
-          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-blue-300 shadow-sm">C</kbd> Snap</span>
-          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-blue-300 shadow-sm">M</kbd> Vista</span>
-          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-blue-300 shadow-sm">V</kbd> Voz</span>
+          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-orange-300 shadow-sm">1-3</kbd> Dron</span>
+          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-orange-300 shadow-sm">T</kbd> FLIR</span>
+          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-orange-300 shadow-sm">C</kbd> Snap</span>
+          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-orange-300 shadow-sm">M</kbd> Vista</span>
+          <span className="flex items-center gap-1.5 text-slate-400"><kbd className="bg-white/10 ring-1 ring-white/20 px-1.5 py-0.5 rounded-md text-orange-300 shadow-sm">V</kbd> Voz</span>
         </div>
       </footer>
     </div>

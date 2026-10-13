@@ -74,7 +74,7 @@ export const KpiRibbon: React.FC = () => {
           <Radio className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
           <div className="flex justify-between items-start mb-6">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Flota Activa</span>
-            <Radio className="w-4 h-4 text-blue-400 opacity-80" />
+            <Radio className="w-4 h-4 text-orange-400 opacity-80" />
           </div>
           <div>
             <div className="flex items-baseline gap-1">
@@ -110,7 +110,7 @@ export const KpiRibbon: React.FC = () => {
           <Compass className="absolute top-4 right-4 w-24 h-24 text-slate-100 opacity-5 -mt-4 -mr-4 pointer-events-none" />
           <div className="flex justify-between items-start mb-6">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Cobertura SAR</span>
-            <Target className="w-4 h-4 text-purple-400 opacity-80" />
+            <Target className="w-4 h-4 text-orange-400 opacity-80" />
           </div>
           <div>
             <div className="flex items-baseline gap-1 mb-3">
@@ -119,7 +119,7 @@ export const KpiRibbon: React.FC = () => {
             </div>
             <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
               <div 
-                className="h-full rounded-full bg-purple-500 transition-all duration-1000 ease-out" 
+                className="h-full rounded-full bg-orange-500 transition-all duration-1000 ease-out" 
                 style={{ width: `${coveragePct}%` }}
               />
             </div>

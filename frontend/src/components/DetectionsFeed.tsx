@@ -146,7 +146,7 @@ export const DetectionsFeed: React.FC = () => {
                       {d.drone_id && (
                         <>
                           <span className="text-white/20">•</span>
-                          <span className="text-[10px] text-sky-400 font-mono">{d.drone_id}</span>
+                          <span className="text-[10px] text-cyan-400 font-mono">{d.drone_id}</span>
                         </>
                       )}
                     </div>
@@ -219,7 +219,7 @@ export const DetectionsFeed: React.FC = () => {
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase">Detector UAV:</span>
-                <span className="text-sky-300 font-bold text-xs">{enlargedTarget.drone_id || 'ARES-01'}</span>
+                <span className="text-cyan-300 font-bold text-xs">{enlargedTarget.drone_id || 'ARES-01'}</span>
               </div>
             </div>
 

@@ -23,7 +23,7 @@ interface AARReportModalProps {
 
 export const AARReportModal: React.FC<AARReportModalProps> = ({ isOpen, onClose }) => {
   const { drones, detections, coveragePct, coveredAreaM2, aiStatus, wind, antiJamming } = useSwarmStore();
-  const [missionId] = useState(`BIOSCAOUT-SAR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-01`);
+  const [missionId] = useState(`ARES-SAR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-01`);
 
   if (!isOpen) return null;
 
@@ -151,7 +151,7 @@ export const AARReportModal: React.FC<AARReportModalProps> = ({ isOpen, onClose 
 
             <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
               <span className="text-slate-400 block mb-1">ENTORNO EW / RF</span>
-              <span className="text-xl font-mono font-black text-indigo-300">{antiJamming?.ew_environment || 'NOMINAL'}</span>
+              <span className="text-xl font-mono font-black text-orange-300">{antiJamming?.ew_environment || 'NOMINAL'}</span>
               <span className="text-[10px] text-slate-500 block mt-1">Viento: {wind.speed_ms.toFixed(1)} m/s @ {wind.direction_deg}°</span>
             </div>
           </div>
@@ -257,7 +257,7 @@ export const AARReportModal: React.FC<AARReportModalProps> = ({ isOpen, onClose 
           <div className="border-t border-slate-800 pt-6 mt-6 grid grid-cols-2 gap-8 text-xs font-mono text-slate-400">
             <div>
               <div className="border-b border-slate-700 pb-1 mb-1 font-bold text-slate-300">
-                AUTORIDAD DE COMANDO C2 (BIOSCAOUT)
+                AUTORIDAD DE COMANDO C2 (ARES)
               </div>
               <div>OPERADOR DE MISIÓN / AUTÓNOMO V3.0</div>
               <div className="text-[10px] text-slate-500 mt-1">FIRMA DIGITAL: SHA256-CERTIFIED-AUTOPILOT</div>

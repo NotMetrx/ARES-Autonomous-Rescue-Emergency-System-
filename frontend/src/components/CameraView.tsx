@@ -363,7 +363,7 @@ export const CameraView: React.FC = () => {
             className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm ${
               isExternalLive 
                 ? 'bg-emerald-500/15 ring-1 ring-emerald-500/30 text-emerald-200 hover:bg-emerald-500/25' 
-                : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-blue-500/20 shadow-md'
+                : 'bg-gradient-to-r from-orange-600 to-cyan-600 hover:from-orange-500 hover:to-cyan-500 text-white shadow-orange-500/20 shadow-md'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
@@ -623,7 +623,7 @@ export const CameraView: React.FC = () => {
                         return (
                           <div key={i} className="flex-1 flex flex-col justify-end items-center h-full">
                             <div 
-                              className={`w-full rounded-t transition-all duration-300 ${isSpike ? 'bg-rose-500' : 'bg-gradient-to-t from-blue-500 to-cyan-400'}`}
+                              className={`w-full rounded-t transition-all duration-300 ${isSpike ? 'bg-rose-500' : 'bg-gradient-to-t from-orange-500 to-cyan-400'}`}
                               style={{ height: `${heightPct}%` }}
                               title={`${h.latency_ms.toFixed(1)} ms`}
                             />
@@ -751,7 +751,7 @@ export const CameraView: React.FC = () => {
                 className={`px-2.5 py-1 rounded-lg font-medium transition-all duration-200 ${
                   palette === p 
                     ? p === 'IRONBOW' 
-                      ? 'bg-gradient-to-r from-purple-500 to-amber-500 text-white shadow-sm' 
+                      ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-sm' 
                       : 'bg-white/15 text-white shadow-sm ring-1 ring-white/20' 
                     : 'text-slate-400 hover:text-white'
                 }`}
@@ -782,7 +782,7 @@ export const CameraView: React.FC = () => {
               max="20"
               value={currentPtz.pitch_deg}
               onChange={(e) => handleGimbalChange(parseFloat(e.target.value), currentPtz.yaw_deg, currentPtz.zoom)}
-              className="w-16 accent-blue-400 h-1 bg-white/10 rounded-full"
+              className="w-16 accent-orange-400 h-1 bg-white/10 rounded-full"
             />
             <span className="font-mono text-cyan-300 w-7 text-[11px] text-right">{currentPtz.pitch_deg}°</span>
           </div>
@@ -795,7 +795,7 @@ export const CameraView: React.FC = () => {
               max="90"
               value={currentPtz.yaw_deg}
               onChange={(e) => handleGimbalChange(currentPtz.pitch_deg, parseFloat(e.target.value), currentPtz.zoom)}
-              className="w-16 accent-blue-400 h-1 bg-white/10 rounded-full"
+              className="w-16 accent-orange-400 h-1 bg-white/10 rounded-full"
             />
             <span className="font-mono text-cyan-300 w-7 text-[11px] text-right">{currentPtz.yaw_deg}°</span>
           </div>
@@ -809,7 +809,7 @@ export const CameraView: React.FC = () => {
               step="0.1"
               value={currentPtz.zoom}
               onChange={(e) => handleGimbalChange(currentPtz.pitch_deg, currentPtz.yaw_deg, parseFloat(e.target.value))}
-              className="w-14 accent-blue-400 h-1 bg-white/10 rounded-full"
+              className="w-14 accent-orange-400 h-1 bg-white/10 rounded-full"
             />
             <span className="font-mono text-cyan-300 w-7 text-[11px] text-right">{currentPtz.zoom.toFixed(1)}x</span>
           </div>

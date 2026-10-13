@@ -171,7 +171,7 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
   }) => {
     const variants: Record<string, string> = {
       default: 'hover:bg-white/[0.08] ring-white/[0.06] text-slate-200',
-      blue: 'hover:bg-blue-500/15 ring-blue-500/20 text-blue-100',
+      orange: 'hover:bg-orange-500/15 ring-orange-500/20 text-orange-100',
       amber: 'hover:bg-amber-500/15 ring-amber-500/20 text-amber-100',
       emerald: 'hover:bg-emerald-500/15 ring-emerald-500/20 text-emerald-100',
       rose: 'hover:bg-rose-500/15 ring-rose-500/20 text-rose-100',
@@ -195,7 +195,7 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
   return (
     <div className="relative rounded-3xl p-5 bg-slate-900/40 backdrop-blur-xl ring-1 ring-white/[0.08] shadow-2xl shadow-black/30 overflow-hidden">
       {/* Top accent gradient line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
 
       {/* Header: Drone Selector & Live Telemetry */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-white/[0.06]">
@@ -218,7 +218,7 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
                   }`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${
-                    isBreached ? 'bg-rose-500 animate-pulse' : isSel ? 'bg-blue-400' : 'bg-slate-600'
+                    isBreached ? 'bg-rose-500 animate-pulse' : isSel ? 'bg-orange-400' : 'bg-slate-600'
                   }`} />
                   <span>{id}</span>
                 </button>
@@ -252,14 +252,14 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
             label="Batería"
             unit="%"
           />
-          <CircularGauge value={currentDrone.alt} max={120} color="stroke-blue-400" label="Altitud" unit="m" />
+          <CircularGauge value={currentDrone.alt} max={120} color="stroke-orange-400" label="Altitud" unit="m" />
           <CircularGauge value={currentDrone.speed_ms} max={15} color="stroke-amber-400" label="Velocidad" unit="m/s" />
         </div>
       </div>
 
       {/* Main Action Buttons Grid */}
       <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2.5 mb-4">
-        <ActionBtn icon={Camera} label="Ver Cámara" onClick={() => { setViewMode('camera'); triggerFeedback(`Cámara FPV: ${currentDrone.drone_id}`, `Abriendo transmisión de cámara para ${currentDrone.drone_id}`); }} variant="blue" />
+        <ActionBtn icon={Camera} label="Ver Cámara" onClick={() => { setViewMode('camera'); triggerFeedback(`Cámara FPV: ${currentDrone.drone_id}`, `Abriendo transmisión de cámara para ${currentDrone.drone_id}`); }} variant="orange" />
         <ActionBtn icon={Crosshair} label={gotoMode ? 'Cancelar GOTO' : 'Designar GOTO'} onClick={() => setGotoMode(!gotoMode)} variant="amber" active={gotoMode} />
         <ActionBtn icon={Home} label="Retorno Base" onClick={() => handleCommand('RTH', `${currentDrone.drone_id} iniciando retorno autónomo`)} variant="amber" />
         <ActionBtn icon={RotateCw} label="Órbita / Hold" onClick={handleHoldPosition} />
@@ -277,7 +277,7 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
       {/* Flight Parameter Sliders */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t border-white/[0.06] text-xs font-mono">
         <div className="flex items-center space-x-3 bg-white/[0.03] p-3 rounded-xl ring-1 ring-white/[0.06]">
-          <ArrowUp className="w-4 h-4 text-blue-400 shrink-0" />
+          <ArrowUp className="w-4 h-4 text-orange-400 shrink-0" />
           <span className="text-slate-400 shrink-0">Altitud:</span>
           <input
             type="range"
@@ -285,9 +285,9 @@ export const DroneActionTray: React.FC<DroneActionTrayProps> = ({ gotoMode, setG
             max="100"
             value={targetAlt}
             onChange={(e) => handleUpdateFlightParams(parseInt(e.target.value), targetSpeed)}
-            className="flex-1 accent-blue-400 h-1"
+            className="flex-1 accent-orange-400 h-1"
           />
-          <span className="text-blue-300 font-semibold w-12 text-right">{targetAlt} m</span>
+          <span className="text-orange-300 font-semibold w-12 text-right">{targetAlt} m</span>
         </div>
 
         <div className="flex items-center space-x-3 bg-white/[0.03] p-3 rounded-xl ring-1 ring-white/[0.06]">

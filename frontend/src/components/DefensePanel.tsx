@@ -150,9 +150,9 @@ export const DefensePanel: React.FC = () => {
         <div className="backdrop-blur-md bg-white/[0.03] p-4 rounded-2xl ring-1 ring-white/[0.06]">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-white flex items-center">
-              <Wind className="w-3.5 h-3.5 mr-1.5 text-sky-400" /> Vector de Viento & PNR Dinámico
+              <Wind className="w-3.5 h-3.5 mr-1.5 text-cyan-400" /> Vector de Viento & PNR Dinámico
             </h3>
-            <span className="font-mono text-[11px] font-semibold text-sky-300">
+            <span className="font-mono text-[11px] font-semibold text-cyan-300">
               {wind.speed_ms.toFixed(1)} m/s @ {wind.direction_deg}°
             </span>
           </div>
@@ -172,7 +172,7 @@ export const DefensePanel: React.FC = () => {
                 step="0.5"
                 value={wind.speed_ms}
                 onChange={e => handleUpdateWind(parseFloat(e.target.value), wind.direction_deg)}
-                className="w-full accent-sky-400 h-1 bg-white/10 rounded-full"
+                className="w-full accent-cyan-400 h-1 bg-white/10 rounded-full"
               />
             </div>
             <div>
@@ -184,7 +184,7 @@ export const DefensePanel: React.FC = () => {
                 step="15"
                 value={wind.direction_deg}
                 onChange={e => handleUpdateWind(wind.speed_ms, parseInt(e.target.value))}
-                className="w-full accent-sky-400 h-1 bg-white/10 rounded-full"
+                className="w-full accent-cyan-400 h-1 bg-white/10 rounded-full"
               />
             </div>
           </div>
@@ -217,9 +217,9 @@ export const DefensePanel: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold text-white flex items-center">
-                <Send className="w-3.5 h-3.5 mr-1.5 text-indigo-400" /> ATAK / WinTAK CoT XML Gateway
+                <Send className="w-3.5 h-3.5 mr-1.5 text-orange-400" /> ATAK / WinTAK CoT XML Gateway
               </h3>
-              <span className="px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-500/30">
+              <span className="px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-orange-500/15 text-orange-300 ring-1 ring-orange-500/30">
                 UDP 4242
               </span>
             </div>
@@ -254,7 +254,7 @@ export const DefensePanel: React.FC = () => {
             <button
               onClick={handleBroadcastCoT}
               disabled={isBroadcasting}
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-medium text-xs rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5"
+              className="w-full py-2.5 bg-gradient-to-r from-orange-600 to-cyan-600 hover:from-orange-500 hover:to-cyan-500 text-white font-medium text-xs rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isBroadcasting ? 'TRANSMITIENDO A ATAK...' : 'BROADCAST CoT AHORA (UDP)'}</span>

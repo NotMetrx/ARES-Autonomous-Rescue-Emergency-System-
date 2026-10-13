@@ -71,7 +71,7 @@ export const OfflineMap: React.FC = () => {
       const iconHtml = `
         <div class="relative flex items-center justify-center">
           <div style="transform: rotate(${d.orientation.yaw}deg);" class="w-8 h-8 rounded-full ${
-            isBreached ? 'bg-rose-500 animate-pulse' : isSelected ? 'bg-cyan-500 ring-4 ring-cyan-300/40' : 'bg-sky-600'
+            isBreached ? 'bg-rose-500 animate-pulse' : isSelected ? 'bg-cyan-500 ring-4 ring-cyan-300/40' : 'bg-cyan-600'
           } flex items-center justify-center text-white font-black text-xs shadow-lg transition-transform">
             ▲
           </div>

@@ -63,7 +63,7 @@ export const FleetCards: React.FC = () => {
               hover:-translate-y-0.5 hover:shadow-xl
               active:scale-[0.98]
               ${isSelected
-                ? 'bg-white/[0.06] ring-blue-500/30 shadow-blue-500/10'
+                ? 'bg-white/[0.06] ring-orange-500/30 shadow-orange-500/10'
                 : 'bg-white/[0.03] ring-white/[0.06] hover:ring-white/[0.12] shadow-black/20'
               }
               ${isBreached ? 'ring-rose-500/40' : ''}
@@ -72,7 +72,7 @@ export const FleetCards: React.FC = () => {
           >
             {/* Top accent line for selected */}
             {isSelected && (
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 opacity-60" />
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-orange-500 via-cyan-400 to-orange-500 opacity-60" />
             )}
 
             {/* Safety breach pulsing glow */}
@@ -85,7 +85,7 @@ export const FleetCards: React.FC = () => {
               <div className="flex items-center space-x-2.5">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 ${
                   isSelected
-                    ? 'bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20'
+                    ? 'bg-gradient-to-br from-orange-500 to-cyan-500 shadow-lg shadow-orange-500/20'
                     : 'bg-white/[0.06] ring-1 ring-white/10'
                 }`}>
                   <Plane className={`w-4.5 h-4.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
@@ -94,7 +94,7 @@ export const FleetCards: React.FC = () => {
                   <h3 className="font-semibold text-sm text-white flex items-center space-x-1.5">
                     <span>{d.drone_id}</span>
                     {isSelected && (
-                      <span className="text-[10px] text-blue-400 font-normal bg-blue-500/10 px-1.5 py-0.5 rounded-md">Enfocado</span>
+                      <span className="text-[10px] text-orange-400 font-normal bg-orange-500/10 px-1.5 py-0.5 rounded-md">Enfocado</span>
                     )}
                   </h3>
                 </div>
@@ -132,7 +132,7 @@ export const FleetCards: React.FC = () => {
             <div className="grid grid-cols-3 gap-2 bg-white/[0.03] p-2.5 rounded-xl ring-1 ring-white/[0.05] mb-3">
               <div className="text-center">
                 <span className="text-[9px] text-slate-500 block font-medium uppercase tracking-wider">Altura</span>
-                <span className="font-mono text-xs font-semibold text-blue-300">{d.alt.toFixed(1)} m</span>
+                <span className="font-mono text-xs font-semibold text-orange-300">{d.alt.toFixed(1)} m</span>
               </div>
               <div className="text-center border-x border-white/[0.05]">
                 <span className="text-[9px] text-slate-500 block font-medium uppercase tracking-wider">Velocidad</span>
@@ -140,7 +140,7 @@ export const FleetCards: React.FC = () => {
               </div>
               <div className="text-center">
                 <span className="text-[9px] text-slate-500 block font-medium uppercase tracking-wider">Heading</span>
-                <span className="font-mono text-xs font-semibold text-sky-300">{d.orientation.yaw.toFixed(0)}°</span>
+                <span className="font-mono text-xs font-semibold text-cyan-300">{d.orientation.yaw.toFixed(0)}°</span>
               </div>
             </div>
 

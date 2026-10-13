@@ -144,7 +144,7 @@ export const MissionsPanel: React.FC = () => {
           {/* AAR Report Generator Trigger */}
           <button
             onClick={() => { tacticalAudio.playButtonBeep(); setIsAAROpen(true); }}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-medium shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white rounded-xl text-xs font-medium shadow-md shadow-orange-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>GENERAR INFORME AAR</span>
@@ -211,7 +211,7 @@ export const MissionsPanel: React.FC = () => {
             <button
               onClick={handleGenerateGrid}
               disabled={isGenerating}
-              className="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium text-xs rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5"
+              className="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-orange-600 hover:from-cyan-500 hover:to-orange-500 text-white font-medium text-xs rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5"
             >
               <Zap className="w-4 h-4" />
               <span>{isGenerating ? 'GENERANDO RUTA...' : 'GENERAR MISIÓN SAR'}</span>
@@ -231,7 +231,7 @@ export const MissionsPanel: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold text-white flex items-center">
-                <Layers className="w-3.5 h-3.5 mr-1.5 text-sky-400" /> Formaciones Tácticas Autónomas
+                <Layers className="w-3.5 h-3.5 mr-1.5 text-cyan-400" /> Formaciones Tácticas Autónomas
               </h3>
               <span className="text-[10px] text-slate-400 font-mono">Espaciado: {formationSpacing}m</span>
             </div>
@@ -317,7 +317,7 @@ export const MissionsPanel: React.FC = () => {
           </div>
 
           {formationMsg && (
-            <div className="mt-3 p-2.5 backdrop-blur-md bg-sky-500/10 ring-1 ring-sky-500/30 text-sky-200 text-[11px] rounded-xl">
+            <div className="mt-3 p-2.5 backdrop-blur-md bg-cyan-500/10 ring-1 ring-cyan-500/30 text-cyan-200 text-[11px] rounded-xl">
               {formationMsg}
             </div>
           )}

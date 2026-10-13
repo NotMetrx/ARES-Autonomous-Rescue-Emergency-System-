@@ -1328,11 +1328,11 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
       <div className="absolute top-3 left-3 flex flex-wrap items-center gap-2 pointer-events-auto">
         <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-cyan-500/40 text-xs font-mono text-cyan-300 flex items-center space-x-2 shadow-lg">
           <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-          <span className="font-extrabold tracking-wide">BIOSCAOUT 3D ESPACIO AÉREO</span>
+          <span className="font-extrabold tracking-wide">ARES 3D ESPACIO AÉREO</span>
           <span className="text-slate-500">|</span>
           <span className="text-emerald-400 font-bold">60 FPS</span>
           <span className="text-slate-500">|</span>
-          <span className="text-sky-400 font-bold">LiDAR: {lidarPointCount.toLocaleString()} pts</span>
+          <span className="text-cyan-400 font-bold">LiDAR: {lidarPointCount.toLocaleString()} pts</span>
         </div>
 
         {/* Camera Perspective Mode Switcher */}
@@ -1434,7 +1434,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
           <button
             onClick={() => setShowRfMesh(!showRfMesh)}
             className={`px-2 py-1 rounded-lg font-bold transition ${
-              showRfMesh ? 'bg-sky-950 text-sky-300 border border-sky-700/60' : 'text-slate-500 hover:text-slate-300'
+              showRfMesh ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/60' : 'text-slate-500 hover:text-slate-300'
             }`}
             title="Red Mesh RF y Elipsoide de Fresnel"
           >
@@ -1507,7 +1507,7 @@ export const Viewport3D: React.FC<Viewport3DProps> = ({
       <div className="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md p-2.5 rounded-xl border border-slate-700/70 text-[11px] text-slate-300 space-y-1 pointer-events-none shadow-lg">
         <div className="flex items-center space-x-1.5 text-cyan-300 font-bold">
           <Navigation className="w-3.5 h-3.5 text-cyan-400" />
-          <span>CONTROLES BIOSCAOUT 3D</span>
+          <span>CONTROLES ARES 3D</span>
         </div>
         <div>🖱️ <strong>Click en Dron:</strong> Seleccionar unidad</div>
         <div>📍 <strong>Designar GOTO:</strong> Click en suelo (modo activo)</div>

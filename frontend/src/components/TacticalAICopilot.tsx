@@ -48,7 +48,7 @@ export const TacticalAICopilot: React.FC = () => {
     {
       id: 'init-1',
       sender: 'copilot',
-      text: 'Copiloto Táctico BIOSCAOUT activo. Listo para recibir órdenes operacionales por voz o texto.',
+      text: 'Copiloto Táctico ARES activo. Listo para recibir órdenes operacionales por voz o texto.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
   ]);
@@ -268,12 +268,12 @@ export const TacticalAICopilot: React.FC = () => {
   return (
     <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] h-[560px] backdrop-blur-2xl bg-slate-900/85 ring-1 ring-white/15 rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden z-50 animate-slideUp font-sans select-none">
       {/* Top Accent Gradient Line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 opacity-70" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-orange-500 via-cyan-400 to-orange-500 opacity-70" />
 
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-white/[0.08] flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
             <Bot className="w-4.5 h-4.5" />
           </div>
           <div>
@@ -303,7 +303,7 @@ export const TacticalAICopilot: React.FC = () => {
             <div
               className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed shadow-sm ${
                 m.sender === 'user'
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-br-sm'
+                  ? 'bg-gradient-to-r from-orange-600 to-cyan-600 text-white rounded-br-sm'
                   : 'backdrop-blur-md bg-white/[0.04] ring-1 ring-white/[0.08] text-slate-200 rounded-bl-sm'
               }`}
             >
@@ -386,7 +386,7 @@ export const TacticalAICopilot: React.FC = () => {
         <button
           onClick={() => executeCommand(inputVal)}
           disabled={!inputVal.trim()}
-          className="p-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-30 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-blue-500/20"
+          className="p-2.5 bg-gradient-to-r from-orange-600 to-cyan-600 hover:from-orange-500 hover:to-cyan-500 disabled:opacity-30 text-white rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-md shadow-orange-500/20"
         >
           <Send className="w-4 h-4" />
         </button>

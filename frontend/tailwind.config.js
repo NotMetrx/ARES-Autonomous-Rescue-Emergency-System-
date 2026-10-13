@@ -4,7 +4,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        tactical: { dark: '#060911', panel: '#0b1220', elevated: '#111c30', border: 'rgba(56, 189, 248, 0.18)', accent: '#06b6d4', cyan: '#38bdf8', alert: '#f43f5e', warning: '#f59e0b', success: '#10b981' }
+        tactical: { dark: '#060911', panel: '#0b1220', elevated: '#111c30', border: 'rgba(249, 115, 22, 0.18)', accent: '#f97316', cyan: '#38bdf8', alert: '#f43f5e', warning: '#f59e0b', success: '#10b981', rescue: '#ff6b1a' },
+        rescue: {
+          50: '#fff4ed',
+          100: '#ffe6d5',
+          200: '#ffc9aa',
+          300: '#ffa371',
+          400: '#ff7a3c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407'
+        }
       },
       fontFamily: { sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
       boxShadow: { 
